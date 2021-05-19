@@ -1,5 +1,5 @@
 # SFRL
-a simple framework for Reinforcement learning
+a simple framework for Reinforcement learning  
 之前做强化学习的时候总是会遇到性能问题，因为强化学习的特殊性，探索和训练是串行的，尝试过把tf并行化，但由于tf session本身不支持序列化，导致需要每个进程单独启动一个session维护一套完整的
 tf上下文，再加上python多线程比较扯淡，需要通过共享内存交互参数等数据，总感觉十分别扭  
 并且，无论是tf还是pytorch，为了通用性牺牲了太多性能，本身强化学习也没有非常复杂的网络结构（其实就是MLP）用tf有点大材小用了，再加上自己对框架本身感兴趣，所以给自己挖了一个坑  
