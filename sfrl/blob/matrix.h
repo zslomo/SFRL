@@ -10,6 +10,8 @@ Matrix MakeMatrix(int rows, int cols);
 void FreeMatrix(Matrix matrix);
 Matrix CopyMatrix(Matrix matrix);
 Matrix AddMtrix(Matrix m_source, Matrix m_dest);
+// 点乘，叉乘调用 blas.c中的 Gemm
+Matrix DotMtrix(Matrix m_source, Matrix m_dest);
 void PrintMatrix(Matrix matrix);
 
 #endif

@@ -16,7 +16,7 @@ typedef struct NetWork {
   int input_size;
   int output_size;
   int batch_size;
-  float *delta;
+  float *delta;        // 反向传播时上一层(i+1)层的delta 是计算当前层delta的输入值
 
   // 网络空间
   float *workspace;

@@ -34,7 +34,6 @@ Matrix CopyMatrix(Matrix m_source) {
   return m_dist;
 }
 
-
 Matrix AddMatrix(Matrix m_source, Matrix m_dist) {
   assert(m_source.rows == m_source.rows);
   assert(m_source.cols == m_source.cols);
@@ -47,8 +46,14 @@ Matrix AddMatrix(Matrix m_source, Matrix m_dist) {
 }
 
 Matrix DotMatrix(Matrix m_source, Matrix m_dist) {
-    // todo: 补充矩阵乘法
-    Gemm();
+  assert(m_source.rows == m_source.rows);
+  assert(m_source.cols == m_source.cols);
+  for (int i = 0; i < m_source.rows; ++i) {
+    for (int j = 0; j < m_source.cols; ++j) {
+      m_dist.vals[i][j] *= m_source.vals[i][j];
+    }
+  }
+  return m_dist;
 }
 
 void PrintMatrix(Matrix matrix) {
