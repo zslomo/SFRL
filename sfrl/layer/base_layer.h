@@ -46,14 +46,12 @@ struct Layer {
   int group_size;
 
   // 计算相关
-  float loss;          // 只有最后一层有计算loss
-  // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数
-  // 导数 = deta[i] * output[i]
-  float *deta;         
-  float *weights;
-  float *weights_update;
+  float loss;              // 只有最后一层有计算loss
+  float *deta;             // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数,导数 = deta[i] * output[i]
+  float *weights;      
+  float *weight_updates;   // 权重更新值，反向传播的导数
   float *biases;
-  float *biases_update;
+  float *bias_updates;     // 偏置更新值，反向传播的导数
 
   // bn相关
   float *scales;
