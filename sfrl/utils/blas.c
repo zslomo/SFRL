@@ -1,4 +1,5 @@
 #include "sfrl/utils/blas.h"
+
 #include <math.h>
 
 /**
@@ -120,8 +121,14 @@ void FillTensorBySingleValue(int size, float *Tensor, float value) {
   }
 }
 
-void Axpy(int size, float ALPHA, float *TensorX, float *TensorY) {
+void AxpyTensor(int size, float ALPHA, float *TensorX, float *TensorY) {
   for (int i = 0; i < size; ++i) {
     TensorY[i] += ALPHA * TensorX[i];
+  }
+}
+
+void ScalTensor(int size, float ALPHA, float *TensorX) {
+  for (int i = 0; i < size; ++i) {
+    TensorX[i] *= ALPHA;
   }
 }

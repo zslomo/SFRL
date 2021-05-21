@@ -36,7 +36,8 @@ void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int
 
 float dotTensor(int size, float *TensorX, float *TensorY);
 // 加到TensorY上
-void Axpy(int size, float ALPHA, float *TensorX, float *TensorY);
+void AxpyTensor(int size, float ALPHA, float *TensorX, float *TensorY);
 void FillTensorBySingleValue(int size, float *Tensor, float value);
+void ScalTensor(int size, float ALPHA, float *TensorX);
 
 #endif
