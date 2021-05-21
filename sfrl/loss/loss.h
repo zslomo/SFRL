@@ -10,4 +10,9 @@ void SoftMaxWithCrossEntropy(float *input, float *truth, int n, float temp,
                              float *output);
 void CrossEntropyWithWeight(int n, float *pred, float *weight, float *delta);
 
+void BackwardSoftmax(float *output, float *delta_output, int n, int batch_size,
+                int batch_offset, float temp, float *delta_input);
+void BackwardSoftmaxCore(float *output, float *delta_output, int n, float temp,
+                    float *delta_input);
+
 #endif
