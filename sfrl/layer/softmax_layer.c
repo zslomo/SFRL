@@ -7,17 +7,16 @@
 #include "sfrl/layer/softmax_layer.h"
 #include "sfrl/loss/loss.h"
 
-SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size, int group_size) {
+SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   assert(inputs % groups == 0);
   softmax_layer layer = {0};
   layer.layer_type = SOFTMAX;
-  layer.batch_size = batch;
-  layer.group_size = group_size;
+  layer.batch_size = batch_size;
   layer.input_size = input_size;  // softmax_layer的输入输出元素相同
   layer.output_size = input_size;
 
-  layer.output = calloc(inputs * batch, sizeof(float));
-  layer.delta = calloc(inputs * batch, sizeof(float));
+  layer.output = calloc(inputs * batch_size, sizeof(float));
+  layer.delta = calloc(inputs * batch_size, sizeof(float));
 
   layer.forward = ForwardSoftmaxLayer;
   layer.backward = BackwardSoftmaxLayer;

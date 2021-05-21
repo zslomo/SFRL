@@ -1,5 +1,5 @@
-#include "sfrl/blob/matrix.h"
 #include "assert.h"
+#include "sfrl/blob/matrix.h"
 #include "sfrl/utils/blas.h"
 
 Matrix MakeMatrix(int rows, int cols) {
