@@ -1,5 +1,5 @@
-#include <math.h>
 #include "sfrl/utils/blas.h"
+#include <math.h>
 
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
@@ -22,8 +22,8 @@
  *    目前没有精力折腾，当成一个todo吧
  *    具体的GEMM优化方法可以参见 https://zhuanlan.zhihu.com/p/66958390
  **/
-void Gemm(int TransA, int TransB, int M, int N, int K, float ALPHA, float BETA,
-          float *A, int lda, float *B, int ldb, float *C, int ldc) {
+void Gemm(int TransA, int TransB, int M, int N, int K, float ALPHA, float BETA, float *A, int lda,
+          float *B, int ldb, float *C, int ldc) {
   // 首先计算BETA*C 这里不涉及转置
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
@@ -45,9 +45,9 @@ void Gemm(int TransA, int TransB, int M, int N, int K, float ALPHA, float BETA,
 /**
  *   下面四个函数就是AB是否转置的矩阵乘法
  *   矩阵乘法在没有经过优化的时候就是一个简单的3重for循环
- **/ 
-void GemmAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-            int ldb, float *C, int ldc) {
+ **/
+void GemmAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+            int ldc) {
   // i表示A的第i行，也是C的第i行
   for (int i = 0; i < M; ++i) {
     // k表示A的第k列，同时表示B的第k行
@@ -67,8 +67,8 @@ void GemmAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void GemmTAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc) {
+void GemmTAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+             int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int k = 0; k < K; ++k) {
       register float A_PART = ALPHA * A[k * lda + i];
@@ -79,8 +79,8 @@ void GemmTAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void GemmATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc) {
+void GemmATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+             int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       register float sum = 0;
@@ -92,8 +92,8 @@ void GemmATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
   }
 }
 
-void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-              int ldb, float *C, int ldc) {
+void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+              int ldc) {
   for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
       register float sum = 0;
@@ -106,10 +106,22 @@ void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
 }
 
 // 一维点积
-float dotd1(int N, float *X, int INCX, float *Y, int INCY) {
+float dotTensor(int size, float *TensorX, float *TensorY) {
   float dot = 0;
-  for (int i = 0; i < N; ++i) {
-    dot += X[i * INCX] * Y[i * INCY];
+  for (int i = 0; i < size; ++i) {
+    dot += TensorX[i] * TensorY[i];
   }
   return dot;
+}
+
+void FillTensorBySingleValue(int size, float *Tensor, float value) {
+  for (int i = 0; i < size; ++i) {
+    Tensor[i] = value;
+  }
+}
+
+void Axpy(int size, float ALPHA, float *TensorX, float *TensorY) {
+  for (int i = 0; i < size; ++i) {
+    TensorY[i] += ALPHA * TensorX[i];
+  }
 }

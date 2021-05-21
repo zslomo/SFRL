@@ -1,12 +1,15 @@
 #include "sfrl/layer/dense_layer.h"
+
+#include "sfrl/activations/activations.h"
+#include "sfrl/utils/blas.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size,
-                          ActiType acti_type, InitType init_type) {
+DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
+                          InitType init_type) {
   DenseLayer layer = {0};
   layer.layer_type = DENSE;
   layer.batch_size = batch_size;
@@ -28,4 +31,87 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size,
   layer.update = UpdateDenseLayer;
 
   return layer;
+}
+
+void ForwardDenseLayer(DenseLayer layer, NetWork net) {
+
+  // 最终输出的是一个flat后的一维tensor 大小是output_size * batch_size
+  int output_tensor_size = layer.output_size * layer.batch_size;
+  FillTensorBySingleValue(output_tensor_size, layer.output, 0);
+
+  /**
+   *  计算 intput × weights.T
+   *  维度是 M*K × K*N = M*N
+   *  A input M*K
+   *  B weights N*K
+   *  C output M*N
+   *  M batch_size A的行
+   *  N output_size B.T的列，就是B的行，ldc是 N
+   *  K input_size, A的列，所以 lda ldb也是 K
+   *  ALPHA 和 BETA这里都是1
+   **/
+  int TransA = 0;
+  int TransB = 1;
+  Gemm(TransA, TranB, layer.batch_size, layer.output_size, layer.input_size, 1, 1, net.input,
+       layer.input_size, layer.weights, layer.input_size, layer.output, layer.outputs);
+
+  /**
+    计算 intput × weights.T + bias
+   **/
+  for (int i = 0; i < layer.batch_size; ++i) {
+    Axpy(layer.output_size, 1, layer.biases, layer.output + i * layer.input_size);
+  }
+
+  /**
+   *  计算 f(intput × weights.T + bias)
+   **/
+  ActivateTensor(layer.output, output_tensor_size, layer.acti_type);
+}
+
+void BackwardDenseLayer(DenseLayer layer, NetWork net) {
+  int output_tensor_size = layer.output_size * layer.batch_size;
+  /**
+   *  计算 delta 
+   *  delta = f'(x) * delta_tmp
+   *  ndelta_tmp 是前一层计算好的 delta_tmp = delta(i+1) × weights
+   **/
+  GradientTensor(layer.output, output_tensor_size, layer.acti_type, layer.delta);
+
+  /**
+   *  计算 bias_updates = delta
+   **/
+  for (int i = 0; i < layer.batch_size; ++i) {
+    Axpy(layer.output_size, 1, layer.delta + i * layer.output_size, layer.bias_updates);
+  }
+
+  /**
+   *  计算 当前层的weight_updates = delta.T × input
+   *  维度是 M*K × K*N = M*N
+   *  A delta N*M
+   *  B input K*N
+   *  C weight_updates M*N
+   *  M lda output_size A的列 A.T的行
+   *  N ldb ldc input_size, B的列
+   *  K batch_size, A的行 A.T的列
+   *  ALPHA 和 BETA这里都是1
+   **/
+  int TransA = 1;
+  int TransB = 0;
+  Gemm(TransA, TransB, layer.output_size, layer.input_size, layer.batch_size, 1, 1, layer.delta,
+       layer.output_size, layer.input, layer.input_size, layer.weight_updates, layer.input_size);
+  
+  /**
+   *  计算 上层的delta，这里的上层注意是前向传播意义上的上层
+   *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_updates)就可以直接用(f'(x) *delta).T × input算出来了
+   *  net.delta = delta_tmp = delta × weights
+   *  维度是 M*K × K*N = M*N
+   *  A delta N*M
+   *  B input K*N
+   *  C weight_updates M*N
+   *  M lda output_size A的列 A.T的行
+   *  N ldb ldc input_size, B的列
+   *  K batch_size, A的行 A.T的列
+   *  ALPHA 和 BETA这里都是1
+   **/
+
 }

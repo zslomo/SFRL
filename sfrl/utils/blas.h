@@ -1,7 +1,6 @@
 #ifndef BLAS_H
 #define BLAS_H
 
-
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
  *  参数：
@@ -24,16 +23,20 @@
  *    具体的GEMM优化方法可以参见 https://zhuanlan.zhihu.com/p/66958390
  **/
 
-void Gemm(int TransA, int TransB, int M, int N, int K, float ALPHA, float BETA,
-          float *A, int lda, float *B, int ldb, float *C, int ldc);
-void GemmAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-            int ldb, float *C, int ldc);
-void GemmTAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc);
-void GemmATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-             int ldb, float *C, int ldc);
-void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B,
-              int ldb, float *C, int ldc);
+void Gemm(int TransA, int TransB, int M, int N, int K, float ALPHA, float BETA, float *A, int lda,
+          float *B, int ldb, float *C, int ldc);
+void GemmAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+            int ldc);
+void GemmTAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+             int ldc);
+void GemmATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+             int ldc);
+void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
+              int ldc);
 
-float dotd1(int N, float *X, int INCX, float *Y, int INCY);
+float dotTensor(int size, float *TensorX, float *TensorY);
+// 加到TensorY上
+void Axpy(int size, float ALPHA, float *TensorX, float *TensorY);
+void FillTensorBySingleValue(int size, float *Tensor, float value);
+
 #endif

@@ -72,6 +72,8 @@ struct Layer {
   float probability;
   float *drop_elem;
 
+  // 激活层相关
+
   // 非常重要的三个函数，分别定义了这种类型网络的前向、后向、更新操作
   void (*forward)(struct Layer, struct NetWork);
   void (*backward)(struct Layer, struct NetWork);
