@@ -23,8 +23,8 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.delta = calloc(input_size * batch_size, sizeof(float));
   layer.weights = calloc(output_size * input_size, sizeof(float));
   layer.biases = calloc(output_size, sizeof(float));
-  layer.weight_updates = calloc(input_size * output_size, sizeof(float));
-  layer.bias_updates = calloc(output_size, sizeof(float));
+  layer.weight_grads = calloc(input_size * output_size, sizeof(float));
+  layer.bias_grads = calloc(output_size, sizeof(float));
   InitLayer(layer.weights, layer.biases, input_size, output_size, init_type);
 
   layer.forward = ForwardDenseLayer;
@@ -78,18 +78,18 @@ void BackwardDenseLayer(DenseLayer layer, NetWork net) {
   GradientTensor(layer.output, output_tensor_size, layer.acti_type, layer.delta);
 
   /**
-   *  计算 bias_updates = delta
+   *  计算 bias_grads = delta
    **/
   for (int i = 0; i < layer.batch_size; ++i) {
-    AxpyTensor(layer.output_size, 1, layer.delta + i * layer.output_size, layer.bias_updates);
+    AxpyTensor(layer.output_size, 1, layer.delta + i * layer.output_size, layer.bias_grads);
   }
 
   /**
-   *  计算 当前层的weight_updates = delta.T × input
+   *  计算 当前层的weight_grads = delta.T × input
    *  维度是 M*K × K*N = M*N
    *  A delta N*M
    *  B input K*N
-   *  C weight_updates M*N
+   *  C weight_grads M*N
    *  M lda output_size A的列 A.T的行
    *  N ldb ldc input_size, B的列
    *  K batch_size, A的行 A.T的列
@@ -98,11 +98,11 @@ void BackwardDenseLayer(DenseLayer layer, NetWork net) {
   int TransA = 1;
   int TransB = 0;
   Gemm(TransA, TransB, layer.output_size, layer.input_size, layer.batch_size, 1, 1, layer.delta,
-       layer.output_size, layer.input, layer.input_size, layer.weight_updates, layer.input_size);
+       layer.output_size, layer.input, layer.input_size, layer.weight_grads, layer.input_size);
 
   /**
    *  计算 后一层的delta，即net.delta
-   *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_updates)
+   *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
    *  就可以直接用(f'(x) * delta).T × input算出来了 注意最后一层的时候是没有后一层的，此时 net.delta
    *== null 不需要计算 net.delta = delta_tmp = delta × weights 维度是 M*K × K*N = M*N A delta M*K B
    *weights K*N C net.delta M*N M batch_size A的行 N ldb ldc input_size, B的列 K lda output_size,
@@ -118,11 +118,5 @@ void BackwardDenseLayer(DenseLayer layer, NetWork net) {
 
 void UpdateDenseLayer(DenseLayer layer, int batch_size, float learning_rate, float momentum,
                       float decay) {
-  AxpyTensor(layer.outputs, learning_rate / batch_size, layer.bias_updates,layer.biases);
-  scal_cpu(layer.outputs, momentum, layer.bias_updates, 1);
 
-
-  axpy_cpu(layer.inputs * layer.outputs, -decay * batch_size, layer.weights, 1, layer.weight_updates, 1);
-  axpy_cpu(layer.inputs * layer.outputs, learning_rate / batch_size, layer.weight_updates, 1, layer.weights, 1);
-  scal_cpu(layer.inputs * layer.outputs, momentum, layer.weight_updates, 1);
 }

@@ -49,9 +49,9 @@ struct Layer {
   float loss;              // 只有最后一层有计算loss
   float *deta;             // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数,导数 = deta[i] * output[i]
   float *weights;      
-  float *weight_updates;   // 权重更新值，反向传播的导数
+  float *weight_grads;   // 权重更新值，反向传播的导数
   float *biases;
-  float *bias_updates;     // 偏置更新值，反向传播的导数
+  float *bias_grads;     // 偏置更新值，反向传播的导数
 
   // bn相关
   float *scales;
@@ -72,7 +72,9 @@ struct Layer {
   float probability;
   float *drop_elem;
 
-  // 激活层相关
+  // 优化目标相关
+  float *squared_grad_cum_w
+  float *squared_grad_cum_b   // adgrad 和 rmsprop中的r 累计平方梯度
 
   // 非常重要的三个函数，分别定义了这种类型网络的前向、后向、更新操作
   void (*forward)(struct Layer, struct NetWork);

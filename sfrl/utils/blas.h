@@ -34,10 +34,15 @@ void GemmATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int 
 void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int ldb, float *C,
               int ldc);
 
-float dotTensor(int size, float *TensorX, float *TensorY);
+float DotSumTensor(int size, float *TensorX, float *TensorY);
 // 加到TensorY上
 void AxpyTensor(int size, float ALPHA, float *TensorX, float *TensorY);
 void FillTensorBySingleValue(int size, float *Tensor, float value);
 void ScalTensor(int size, float ALPHA, float *TensorX);
+void DotTensor(int size, float *TensorX, float *TensorY);
+void SquareTensor(int size, float *TensorX, float *TensorY);
+void DivTensor(int size, float eps, float ALPHA, float *TensorX, float *TensorY);
+void InitTensor(int size, float ALPHA, float *TensorX);
+void SqrtTensor(int size, float *TensorX, float *TensorY);
 
 #endif

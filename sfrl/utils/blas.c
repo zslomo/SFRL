@@ -107,13 +107,34 @@ void GemmTATB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int
 }
 
 // 一维点积
-float dotTensor(int size, float *TensorX, float *TensorY) {
+float DotSumTensor(int size, float *TensorX, float *TensorY) {
   float dot = 0;
   for (int i = 0; i < size; ++i) {
     dot += TensorX[i] * TensorY[i];
   }
   return dot;
 }
+
+
+void DotTensor(int size, float *TensorX, float *TensorY) {
+  float dot = 0;
+  for (int i = 0; i < size; ++i) {
+    TensorY[i] = TensorX[i] * TensorY[i];
+  }
+}
+
+void SquareTensor(int size, float *TensorX, float *TensorY) {
+  for (int i = 0; i < size; ++i) {
+    TensorY[i] = TensorX[i] * TensorX[i];
+  }
+}
+
+void SqrtTensor(int size, float *TensorX, float *TensorY) {
+  for (int i = 0; i < size; ++i) {
+    TensorY[i] = sqrt(TensorX[i]);
+  }
+}
+
 
 void FillTensorBySingleValue(int size, float *Tensor, float value) {
   for (int i = 0; i < size; ++i) {
@@ -130,5 +151,18 @@ void AxpyTensor(int size, float ALPHA, float *TensorX, float *TensorY) {
 void ScalTensor(int size, float ALPHA, float *TensorX) {
   for (int i = 0; i < size; ++i) {
     TensorX[i] *= ALPHA;
+  }
+}
+
+void DivTensor(int size, float eps, float ALPHA, float *TensorX, float *TensorY) {
+  for (int i = 0; i < size; ++i) {
+    TensorY[i] = ALPHA / (TensorX[i] + eps);
+  }
+}
+
+
+void InitTensor(int size, float ALPHA, float *TensorX) {
+  for (int i = 0; i < size; ++i) {
+    TensorX[i] = ALPHA;
   }
 }
