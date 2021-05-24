@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "sfrl/activations/activations.h"
+#include "sfrl/optimizer/optimizer.h"
 #include "sfrl/utils/blas.h"
 
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
@@ -114,9 +115,4 @@ void BackwardDenseLayer(DenseLayer layer, NetWork net) {
     Gemm(TransA, TransB, layer.batch_size, layer.input_size, layer.output_size, 1, 1, layer.delta,
          layer.output_size, layer.weights, layer.input_size, net.delta, layer.input_size);
   }
-}
-
-void UpdateDenseLayer(DenseLayer layer, int batch_size, float learning_rate, float momentum,
-                      float decay) {
-
 }

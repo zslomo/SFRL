@@ -2,6 +2,7 @@
 #define NET_WORK_H
 
 #include "sfrl/activations/activations.h"
+#include "sfrl/optimizer/optimizer.h"
 #include "sfrl/layer/base_layer.h"
 
 typedef struct NetWork {
@@ -23,22 +24,27 @@ typedef struct NetWork {
 
   // train test
   int mode;
+  
 
-  // 计算相关
+  // optimization 相关
+  OptType opt_type;
   float decay;
   float momentum;
   float learning_rate;
   float gamma;
   float scale;
-
-  // optimization 相关
   float B1;
   float B2;
   float eps;
+  float *grad_cum_w               // 一些优化方法中的一阶梯度累计量
+  float *grad_cum_b
+  float *grad_cum_square_w        // 一些优化方法中的二阶梯度累计量
+  float *grad_cum_square_b
 
   //标签
   int ground_truth_size;
   float *ground_truth;
+
 }NetWork;
 
 NetWork MakeNetwork(int n);

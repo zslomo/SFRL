@@ -71,10 +71,7 @@ struct Layer {
   // dropout相关
   float probability;
   float *drop_elem;
-
-  // 优化目标相关
-  float *squared_grad_cum_w
-  float *squared_grad_cum_b   // adgrad 和 rmsprop中的r 累计平方梯度
+ 
 
   // 非常重要的三个函数，分别定义了这种类型网络的前向、后向、更新操作
   void (*forward)(struct Layer, struct NetWork);

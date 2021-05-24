@@ -3,7 +3,7 @@
 #include <float.h>
 #include <math.h>
 
-void SgdOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void SgdOptimizer(int input_size, int output_size, float *weights,
                   float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
                   float *grad_cum_b, float lr, float momentum) {
   int w_size = input_size * output_size;
@@ -44,7 +44,7 @@ void SgdOptimizer(int input_size, int output_size, int batch_size, float *weight
   free(grad_tmp);
 }
 
-void AdaGradOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void AdaGradOptimizer(int input_size, int output_size, float *weights,
                       float *weight_grads, float *biases, float *bias_grads,
                       float *grad_cum_square_w, float *grad_cum_square_b, float lr) {
   int w_size = input_size * output_size;
@@ -91,7 +91,7 @@ void AdaGradOptimizer(int input_size, int output_size, int batch_size, float *we
   free(increment_tmp);
 }
 
-void RmsPropOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void RmsPropOptimizer(int input_size, int output_size, float *weights,
                       float *weight_grads, float *biases, float *bias_grads,
                       float *grad_cum_square_w, float *grad_cum_square_b, float lr, float decay) {
   int w_size = input_size * output_size;
@@ -148,7 +148,7 @@ void RmsPropOptimizer(int input_size, int output_size, int batch_size, float *we
   free(increment_tmp);
 }
 
-void AdamOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void AdamOptimizer(int input_size, int output_size, float *weights,
                    float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
                    float *grad_cum_square_w, float *grad_cum_b, float *grad_cum_square_b, float lr,
                    float beta_1, float beta_2) {

@@ -7,16 +7,16 @@
  **/
 typedef enum { ADAM, SGD, ADAGRAD, RMSPROP } OptType;
 
-void SgdOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void SgdOptimizer(int input_size, int output_size, float *weights,
                   float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
                   float *grad_cum_b, float lr, float momentum);
-void AdaGradOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void AdaGradOptimizer(int input_size, int output_size, float *weights,
                       float *weight_grads, float *biases, float *bias_grads,
                       float *grad_cum_square_w, float *grad_cum_square_b, float lr);
-void RmsPropOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void RmsPropOptimizer(int input_size, int output_size, float *weights,
                       float *weight_grads, float *biases, float *bias_grads,
                       float *grad_cum_square_w, float *grad_cum_square_b, float lr, float decay);
-void AdamOptimizer(int input_size, int output_size, int batch_size, float *weights,
+void AdamOptimizer(int input_size, int output_size, float *weights,
                    float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
                    float *grad_cum_square_w, float *grad_cum_b, float *grad_cum_square_b, float lr,
                    float beta_1, float beta_2);
