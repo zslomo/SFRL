@@ -5,11 +5,14 @@
 #include "sfrl/optimizer/optimizer.h"
 #include "sfrl/layer/base_layer.h"
 
+typedef enum { TRIAN, TEST } NetMode;
+
 typedef struct NetWork {
   int layer_depth;
   float epoch;
   int active_layer_index;
   float *cost;
+  NetMode mode;
 
   // 输入输出
   float *input;
@@ -20,11 +23,7 @@ typedef struct NetWork {
   float *delta;        // 反向传播时上一层(i+1)层的delta 是计算当前层delta的输入值
 
   // 网络空间
-  float *workspace;
-
-  // train test
-  int mode;
-  
+  float *workspace;  
 
   // optimization 相关
   OptType opt_type;

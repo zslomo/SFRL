@@ -24,14 +24,14 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   return layer;
 }
 
-void ForwardSoftmaxLayer(const SoftmaxLayer layer, NetWork net) {
-  SoftmaxBatch(net.input, layer.input_size, layer.batch_size, layer.input_size,
-               layer.temperature, layer.output);
+void ForwardSoftmaxLayer(const SoftmaxLayer *layer, NetWork *net) {
+  SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->input_size,
+               layer->temperature, layer->output);
 }
 
-void BackwardSoftmaxLayer(const SoftmaxLayer layer, NetWork net) {
-  // 注意，这里的net.delta是 i+1层的 delta也就是 反向传播的上一层
-  // 计算后赋值给当前层的delta layer.delta
-  BackwardSoftmax(layer.output, layer.delta, layer.input_size, layer.batch_size,
-                  layer.input_size, layer.temperature, net.delta);
+void BackwardSoftmaxLayer(const SoftmaxLayer *layer, NetWork *net) {
+  // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
+  // 计算后赋值给当前层的delta layer->delta
+  BackwardSoftmax(layer->output, layer->delta, layer->input_size, layer->batch_size,
+                  layer->input_size, layer->temperature, net->delta);
 }

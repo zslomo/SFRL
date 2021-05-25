@@ -14,7 +14,7 @@ typedef enum {
 
 typedef Layer LossLayer;
 
-void ForwardLossLayer(LossLayer loss_layer, NetWork net);
-void BackwardLossLayer(LossLayer loss_layer, NetWork net);
+void ForwardLossLayer(LossLayer *loss_layer, NetWork *net);
+void BackwardLossLayer(LossLayer *loss_layer, NetWork *net);
 
 #endif

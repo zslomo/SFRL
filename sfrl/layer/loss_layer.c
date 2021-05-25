@@ -1,15 +1,14 @@
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "sfrl/layer/loss_layer.h"
-#include "sfrl/network/network.h"
 #include "sfrl/loss/loss.h"
+#include "sfrl/network/network.h"
 
-LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type,
-                        float scale) {
+LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, float scale) {
   LossLayer loss_layer = {0};
   loss_layer.layer_type = LOSS;
 
@@ -27,25 +26,21 @@ LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type,
   loss_layer.backward = BackwardLossLayer;
 }
 
-ForwardLossLayer(LossLayer loss_layer, NetWork net) {
-  assert(net.ground_truth);
-  switch (loss_layer.loss_type)
-  {
+ForwardLossLayer(LossLayer *loss_layer, NetWork *net) {
+  assert(net->ground_truth);
+  int n = loss_layer->batch_size * loss_layer->input_size;
+  switch (loss_layer->loss_type) {
   case MSE:
-      int n = loss_layer.batch_size * loss_layer.input_size;
-      Mse(n, net.input, net.ground_truth, loss_layer.delta, loss_layer.error);
-      break;
-  case SOFTMAX:
-      int n = loss_layer.batch_size * loss_layer.input_size;
-      SoftMaxWithCrossEntropy(n, net.input, net.ground_truth, loss_layer.delta, loss_layer.error);
-      break;
-  case CEW:
-      int n = loss_layer.batch_size * loss_layer.input_size;
-      CrossEntropy(n, net.input, net.ground_truth, loss_layer.delta, loss_layer.error);
-      break;
-  
-  default:
-      break;
-  }
 
+    Mse(n, net->input, net->ground_truth, loss_layer->delta, loss_layer->error);
+    break;
+  case SOFTMAX:
+    SoftMaxWithCrossEntropy(n, net->input, net->ground_truth, loss_layer->delta, loss_layer->error);
+    break;
+  case CEW:
+    CrossEntropy(n, net->input, net->ground_truth, loss_layer->delta, loss_layer->error);
+    break;
+  default:
+    break;
+  }
 }

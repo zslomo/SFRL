@@ -1,6 +1,7 @@
 #include "sfrl/utils/blas.h"
 
 #include <math.h>
+#include <float.h>
 
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
@@ -115,7 +116,6 @@ float DotSumTensor(int size, float *TensorX, float *TensorY) {
   return dot;
 }
 
-
 void DotTensor(int size, float *TensorX, float *TensorY) {
   float dot = 0;
   for (int i = 0; i < size; ++i) {
@@ -134,7 +134,6 @@ void SqrtTensor(int size, float *TensorX, float *TensorY) {
     TensorY[i] = sqrt(TensorX[i]);
   }
 }
-
 
 void FillTensorBySingleValue(int size, float *Tensor, float value) {
   for (int i = 0; i < size; ++i) {
@@ -160,6 +159,35 @@ void DivTensor(int size, float eps, float ALPHA, float *TensorX, float *TensorY)
   }
 }
 
+void MeanTensor(float *TensorX, int input_size, int batch_size, float *mean) {
+  assert(batch_size > 1);
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < batch_size; ++j) {
+      mean[i] += TensorX[i + input_size * j];
+    }
+    mean[i] *= 1 / batch_size;
+  }
+}
+
+void VarianceTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance) {
+  assert(batch_size > 1);
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < batch_size; ++j) {
+      variance[i] += pow(TensorX[i + input_size * j] - mean[i], 2);
+    }
+    variance[i] *= 1 / (batch_size - 1);
+  }
+}
+
+void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance){
+  assert(batch_size > 1);
+  float eps = 1e-8;
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < batch_size; ++j) {
+      TensorX[i + input_size * j] = (TensorX[i + input_size * j] - mean[i]) / (sqrt(variance[i]));
+    }
+  }
+}
 
 void InitTensor(int size, float ALPHA, float *TensorX) {
   for (int i = 0; i < size; ++i) {
