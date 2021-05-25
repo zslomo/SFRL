@@ -39,8 +39,8 @@ void FreeLayer(Layer layer) {
   if (layer->output) {
     free(layer->output);
   }
-  if (layer->deta) {
-    free(layer->deta);
+  if (layer->delta) {
+    free(layer->delta);
   }
   if (layer->weights) {
     free(layer->weights);

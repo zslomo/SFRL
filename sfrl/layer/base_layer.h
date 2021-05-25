@@ -8,7 +8,7 @@
 
 /**
  * 网络结构类型，强化学习没有太复杂的结构,这里主要是全连接、卷积(类似棋盘游戏需要)
- * bn 和一些激活函数 LOSS 是用来计算最后一步的deta也就是predict和Y的差
+ * bn 和一些激活函数 LOSS 是用来计算最后一步的delta也就是predict和Y的差
  * ACTIVE 表征这个层是激活函数
  * TODO 卷积、池化、RNN
  **/
@@ -48,7 +48,7 @@ struct Layer {
 
   // 计算相关
   float loss;  // 只有最后一层有计算loss
-  float *deta; // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数,导数 = deta[i] * output[i]
+  float *delta; // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数,导数 = delta[i] * output[i]
   float *weights;
   float *weight_grads; // 权重更新值，反向传播的导数
   float *biases;

@@ -19,7 +19,7 @@ LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, floa
   loss_layer.loss_type = loss_type;
 
   loss_layer.output = calloc(input_size * batch_size, sizeof(float));
-  loss_layer.deta = calloc(input_size * batch_size, sizeof(float));
+  loss_layer.delta = calloc(input_size * batch_size, sizeof(float));
   loss_layer.loss = 0;
 
   loss_layer.forward = ForwardLossLayer;

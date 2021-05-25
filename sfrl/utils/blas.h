@@ -44,5 +44,9 @@ void SquareTensor(int size, float *TensorX, float *TensorY);
 void DivTensor(int size, float eps, float ALPHA, float *TensorX, float *TensorY);
 void InitTensor(int size, float ALPHA, float *TensorX);
 void SqrtTensor(int size, float *TensorX, float *TensorY);
+void MeanTensor(float *TensorX, int input_size, int batch_size, float *mean);
+void VarianceTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance);
+void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance);
+void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamma, float *beta);
 
 #endif

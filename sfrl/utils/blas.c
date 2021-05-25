@@ -1,7 +1,7 @@
 #include "sfrl/utils/blas.h"
 
-#include <math.h>
 #include <float.h>
+#include <math.h>
 
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
@@ -179,12 +179,20 @@ void VarianceTensor(float *TensorX, int input_size, int batch_size, float *mean,
   }
 }
 
-void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance){
+void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance) {
   assert(batch_size > 1);
   float eps = 1e-8;
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
       TensorX[i + input_size * j] = (TensorX[i + input_size * j] - mean[i]) / (sqrt(variance[i]));
+    }
+  }
+}
+
+void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamma, float *beta) {
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < batch_size; ++j) {
+      TensorX[i + input_size * j] = TensorX[i + input_size * j] * gamma[i] + beta[i];
     }
   }
 }

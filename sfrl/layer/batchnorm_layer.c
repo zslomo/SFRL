@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sfrl/layer/batchnorm_layer.h"
 #include "sfrl/activations/activations.h"
 #include "sfrl/layer/base_layer.h"
+#include "sfrl/layer/batchnorm_layer.h"
 #include "sfrl/optimizer/optimizer.h"
 #include "sfrl/utils/blas.h"
 
@@ -24,7 +24,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
    * */
   layer.bn_gammas = calloc(output_size, sizeof(float));
   layer.bn_gamma_grads = calloc(output_size, sizeof(float));
-  layer.bn_betaes = calloc(output_size, sizeof(float));
+  layer.bn_betas = calloc(output_size, sizeof(float));
   layer.bn_beta_grads = calloc(output_size, sizeof(float));
 
   for (i = 0; i < output_size; ++i) {
@@ -78,8 +78,63 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
     NormTensor(layer->output, layer->output_size, layer->batch_size, layer->rolling_mean,
                layer->rolling_variance);
   }
+  /**
+   *  w*γ +β
+   **/
+  BatchNormTensor(layer->output, layer->output_size, layer->batch_size, layer->bn_gammas,
+                  layer->bn_betas)
 }
-void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net){
-
+void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
+  if (net.mode == TRIAN) {
+    /**
+     *  求 gamma 和 beta 的梯度
+     **/
+    BnGamaBackward(layer->bn_gamma_grads, layer->delta, layer->output_normed, layer->output_size,
+                   layer->batch_size);
+    BnBetaBackward(layer->bn_beta_grads, layer->delta, layer->output_size, layer->batch_size);
+    /**
+     *  更新delta
+     *  1 delta = gamma * delta
+     *  2 delta_mean = meand(delta)
+     *  3 delta_var = variance(delta)
+     *  4 normalize delta
+     **/
+    BnDot(layer->bn_gammas, layer->delta, layer->output_size, layer->batch_size);
+  }
 }
 void UpdateBatchNormLayer(BatchNormLayer *layer, NetWork *net);
+
+void BnGamaBackward(float *gamma_grads, float *delta, float *output_normed, int input_size,
+                    int batch_size) {
+  for (int i = 0; i < layer->output_size; ++i) {
+    for (int j = 0; j<layer->batch_size; ++j>) {
+      gamma_grads[i] += delta[i + input_size * j] * output_normed[i + input_size * j];
+    }
+  }
+}
+
+void BnBetaBackward(float *beta_grads, float *delta, int input_size, int batch_size) {
+  for (int i = 0; i < layer->output_size; ++i) {
+    for (int j = 0; j<layer->batch_size; ++j>) {
+      beta_grads[i] += delta[i + input_size * j];
+    }
+  }
+}
+
+void BnDot(float *gamma, float *delta, int input_size, int batch_size) {
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < batch_size; ++j) {
+      delta[i + input_size * j] *= gamma[i];
+    }
+  }
+}
+
+void BnMeanDelta(float *variance, float *delta, int input_size, int batch_size, float *mean) {
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j < batch_size; ++j) {
+      mean[i] += delta[i + input_size * j];
+      delta[i + input_size * j] *= gamma[i];
+    }
+    mean[i] *= 1 / sqrt(variance[i] + .00001f);
+  }
+}
