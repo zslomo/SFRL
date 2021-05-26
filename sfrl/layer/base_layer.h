@@ -41,14 +41,13 @@ struct Layer {
    * */
   // float *input;
   float *output;
+  float *error;
   int input_size;
   int output_size;
   int batch_size;
   int group_size;
 
   // 计算相关
-  float cost;
-  float loss;   // 只有最后一层有计算loss
   float *delta; // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数 dL/dx ,导数 = delta[i] * output[i]
   float *weights;
   float *weight_grads; // 权重更新值，反向传播的导数

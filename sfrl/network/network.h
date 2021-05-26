@@ -12,7 +12,7 @@ typedef struct NetWork {
   int layer_depth;
   float epoch;
   int active_layer_index;
-  float *loss;
+  float loss;
   NetMode mode;
 
   // 输入输出
@@ -25,7 +25,7 @@ typedef struct NetWork {
 
   // 反向传播
   float *delta;  // 注意这里, net->delta 只是指向反向传播时需要层的delta
-
+  float *error;
   // 网络空间
   float *workspace; // 架构是参考了darknet，所以这里设置了一个暂存空间
 
