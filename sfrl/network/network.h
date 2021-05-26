@@ -47,9 +47,12 @@ typedef struct NetWork {
 }NetWork;
 
 NetWork MakeNetwork(int n);
+void free_network(network net);
+
 void ForwardNetwork(NetWork net);
 void BackWardNetwork(NetWork net);
 void UpdateNetwork(NetWork net);
 
 float TrainNetwork(NetWork net, data d);
+
 #endif
