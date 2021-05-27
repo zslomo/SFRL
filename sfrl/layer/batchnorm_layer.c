@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sfrl/activations/activations.h"
 #include "sfrl/layer/base_layer.h"
@@ -58,9 +59,9 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
     /**
      *  计算 norm 并且 存储norm之前的值
      * */
-    memcpy(layer->output, layer->output_before_norm, layer->output_size * sizeof(float));
+    memcpy(layer->output_before_norm, layer->output, layer->output_size * sizeof(float));
     NormTensor(layer->output, layer->output_size, layer->batch_size, layer->mean, layer->variance);
-    memcpy(layer->output, layer->output_normed, layer->output_size * sizeof(float));
+    memcpy(layer->output_normed, layer->output, layer->output_size * sizeof(float));
 
     /**
      *  计算移动平均 和 移动方差

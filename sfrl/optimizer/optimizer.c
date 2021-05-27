@@ -1,7 +1,8 @@
-#include "sfrl/optimizer/optimizer.h"
-
 #include <float.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include "sfrl/optimizer/optimizer.h"
 
 void SgdOptimizer(int input_size, int output_size, float *weights,
                   float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
@@ -19,7 +20,7 @@ void SgdOptimizer(int input_size, int output_size, float *weights,
 
   // bias
   float *grad_tmp = calloc(b_size, sizeof(float));
-  memcpy(grad_cum_b, grad_tmp, b_size * sizeof(float));
+  memcpy(grad_tmp, grad_cum_b, b_size * sizeof(float));
   // ρVt-1
   ScalTensor(b_size, momentum, grad_tmp);
   // g + ρVt-1
@@ -27,12 +28,12 @@ void SgdOptimizer(int input_size, int output_size, float *weights,
   // b = b - lr * (g + ρVt-1)
   AxpyTensor(b_size, -lr, grad_tmp, biases);
   // 动量更新
-  memcpy(grad_tmp, grad_cum_b, b_size * sizeof(float));
+  memcpy(grad_cum_b, grad_tmp, b_size * sizeof(float));
   free(grad_tmp);
 
   // weight
   float *grad_tmp = calloc(w_size, sizeof(float));
-  memcpy(grad_cum_w, grad_tmp, w_size * sizeof(float));
+  memcpy(grad_tmp, grad_cum_w, w_size * sizeof(float));
   // ρVt-1
   ScalTensor(w_size, momentum, grad_tmp);
   // g + ρVt-1
@@ -40,7 +41,7 @@ void SgdOptimizer(int input_size, int output_size, float *weights,
   // w = w - lr * (g + ρVt-1)
   AxpyTensor(w_size, -lr, grad_tmp, biases);
   // 动量更新
-  memcpy(grad_tmp, grad_cum_w, w_size * sizeof(float));
+  memcpy(grad_cum_w, grad_tmp, w_size * sizeof(float));
   free(grad_tmp);
 }
 

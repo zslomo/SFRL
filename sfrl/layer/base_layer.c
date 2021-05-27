@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "sfrl/layer/layer.h"
 #include "sfrl/network/network.h"
 

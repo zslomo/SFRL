@@ -28,6 +28,7 @@ typedef struct NetWork {
   float *error;
   // 网络空间
   float *workspace; // 架构是参考了darknet，所以这里设置了一个暂存空间
+  int batch_trained_cnt;
 
   // optimization 相关
   OptType opt_type;

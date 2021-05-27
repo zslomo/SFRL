@@ -4,6 +4,7 @@
  * https://github.com/flame/how-to-optimize-gemm/blob/master/src/MMult_4x4_15.c
  **/
 
+#include <stdlib.h>
 #include "sfrl/utils/gemm.h"
 
 #define A(i, j) a[(j)*lda + (i)]
