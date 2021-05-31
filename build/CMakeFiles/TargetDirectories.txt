@@ -1,6 +1,0 @@
-/data/brycetan/SFRL/build/CMakeFiles/rebuild_cache.dir
-/data/brycetan/SFRL/build/CMakeFiles/edit_cache.dir
-/data/brycetan/SFRL/build/CMakeFiles/sfrl.dir
-/data/brycetan/SFRL/build/sfrl/CMakeFiles/rebuild_cache.dir
-/data/brycetan/SFRL/build/sfrl/CMakeFiles/edit_cache.dir
-/data/brycetan/SFRL/build/sfrl/CMakeFiles/sfrllib.dir
