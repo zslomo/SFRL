@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
-#include "sfrl/metric/metric.h"
+#include "metric.h"
 
 float MseMetric(int n, float *pred, float *truth) {
   float error = 0;

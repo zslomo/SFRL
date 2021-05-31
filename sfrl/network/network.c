@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sfrl/network/network.h"
-#include "sfrl/activation/activation.h"
-#include "sfrl/data/data.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/layer/batchnorm_layer.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/utils/blas.h"
+#include "network.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/data/data.h"
+#include "../../sfrl/layer/base_layer.h"
+#include "../../sfrl/layer/batchnorm_layer.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/utils/blas.h"
 
 void FreeNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
@@ -30,7 +30,7 @@ void FreeNetwork(NetWork *net) {
 
 NetWork MakeNetwork(int n) {
   NetWork net = {0};
-  net.layers = calloc(net.layer_depth, sizeof(Layer));
+  net.layers = calloc(net.layer_depth, sizeof(Layer *));
   return net;
 }
 
@@ -73,10 +73,7 @@ float Train(NetWork *net, Data *data) {
   return sum / (batch_num * batch_size + last_batch_size);
 }
 
-float Test(NetWork *net, Data *data) {
-  net->mode = TEST;
-
-}
+float Test(NetWork *net, Data *data) { net->mode = TEST; }
 
 void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset) {
   int size = data->size_per_sample;

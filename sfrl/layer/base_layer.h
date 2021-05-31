@@ -2,8 +2,8 @@
 #define BASE_LAYER_H
 
 #include <stddef.h>
-#include "sfrl/activation/activation.h"
-#include "sfrl/loss/loss.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/loss/loss.h"
 
 struct Layer;
 typedef struct Layer Layer;

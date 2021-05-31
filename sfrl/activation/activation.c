@@ -49,8 +49,7 @@ void ActivateTensor(float *TensorX, const int size, const ActiType acti_type) {
 }
 
 void GradientTensor(const float *TensorX, const int size, const ActiType acti_type, float *delta) {
-  int i;
-  for (i = 0; i < n; ++i) {
+  for (int i = 0; i < size; ++i) {
     delta[i] *= Gradient(TensorX[i], acti_type);
   }
 }

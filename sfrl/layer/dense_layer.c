@@ -3,12 +3,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "sfrl/activation/activation.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/layer/dense_layer.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/utils/blas.h"
+#include "base_layer.h"
+#include "dense_layer.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/utils/blas.h"
 
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
                           InitType init_type) {
@@ -35,7 +34,7 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   return layer;
 }
 
-void UpdateDenseLayer(DenseLayer *layer, NetWork *net) { UpdateLayer(&layer, &network); }
+void UpdateDenseLayer(DenseLayer *layer, NetWork *net) { UpdateLayer(&layer, &net); }
 
 void ForwardDenseLayer(DenseLayer *layer, NetWork *net) {
   // 最终输出的是一个flat后的一维tensor 大小是output_size * batch_size
@@ -56,8 +55,8 @@ void ForwardDenseLayer(DenseLayer *layer, NetWork *net) {
    **/
   int TransA = 0;
   int TransB = 1;
-  Gemm(TransA, TranB, layer->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
-       layer->input_size, layer->weights, layer->input_size, layer->output, layer->outputs);
+  Gemm(TransA, TransB, layer->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
+       layer->input_size, layer->weights, layer->input_size, layer->output, layer->output_size);
 
   /**
     计算 intput × weights->T + bias
@@ -102,7 +101,7 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
   int TransA = 1;
   int TransB = 0;
   Gemm(TransA, TransB, layer->output_size, layer->input_size, layer->batch_size, 1, 1, layer->delta,
-       layer->output_size, layer->input, layer->input_size, layer->weight_grads, layer->input_size);
+       layer->output_size, net->input, layer->input_size, layer->weight_grads, layer->input_size);
 
   /**
    *  计算 后一层的delta，即net->delta

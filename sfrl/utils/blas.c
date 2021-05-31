@@ -1,7 +1,7 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
-#include "sfrl/utils/blas.h"
+#include "blas.h"
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
  *  参数：

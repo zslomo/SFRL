@@ -3,8 +3,8 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
-#include "sfrl/loss/loss.h"
-#include "sfrl/utils/blas.h"
+#include "loss.h"
+#include "../../sfrl/utils/blas.h"
 
 // MSE 这里不求和
 void MeanSquareError(int n, float *pred, float *truth, float *error) {

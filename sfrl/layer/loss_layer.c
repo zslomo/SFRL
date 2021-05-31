@@ -4,15 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sfrl/layer/loss_layer.h"
-#include "sfrl/loss/loss.h"
-#include "sfrl/network/network.h"
+#include "loss_layer.h"
+#include "../../sfrl/loss/loss.h"
+#include "../../sfrl/network/network.h"
 
-LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, float scale) {
+LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type) {
   LossLayer loss_layer = {0};
   loss_layer.layer_type = LOSS;
 
-  loss_layer.scale = scale;
   loss_layer.batch_size = batch_size;
   loss_layer.input_size = input_size;
   loss_layer.output_size = input_size;

@@ -1,12 +1,9 @@
 cmake_minimum_required (VERSION 3.0)
 project (sfrl)
 add_definitions(-std=c11)
-# 查找当前目录下的所有源文件
-# 并将名称保存到 DIR_SRCS 变量
-aux_source_directory(. DIR_SRCS)
-# 添加 math 子目录
-add_subdirectory(src)
-# 指定生成目标 
-add_executable(demo ${DIR_SRCS})
-# 添加链接库
-target_link_libraries(demo MiniDNNLib)
+# SET(PROJECT_ROOT_PATH "./")
+aux_source_directory(./ DIR_SRCS)
+INCLUDE_DIRECTORIES("${DIR_SRCS}/")
+add_subdirectory(sfrl)
+add_executable(sfrl ${DIR_SRCS})
+target_link_libraries(sfrl sfrllib)

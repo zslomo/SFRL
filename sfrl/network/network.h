@@ -1,16 +1,16 @@
 #ifndef NET_WORK_H
 #define NET_WORK_H
 
-#include "sfrl/activation/activation.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/loss/loss.h"
-#include "sfrl/data/data.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/layer/base_layer.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/loss/loss.h"
+#include "../../sfrl/data/data.h"
 
 typedef enum { TRAIN, TEST } NetMode;
 
 struct NetWork {
-  Layer *layers;
+  Layer **layers;
   int layer_depth;
   float epoch;
   int active_layer_index;

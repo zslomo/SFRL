@@ -1,15 +1,14 @@
+#include "batchnorm_layer.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/utils/blas.h"
+#include "base_layer.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sfrl/activation/activation.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/layer/batchnorm_layer.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/utils/blas.h"
 
 BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_size,
                                   ActiType acti_type, InitType init_type) {
@@ -52,7 +51,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
 void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
-  if (net.mode == TRAIN) {
+  if (net->mode == TRAIN) {
     MeanTensor(layer->output, layer->output_size, layer->batch_size, layer->mean);
     VarianceTensor(layer->output, layer->output_size, layer->batch_size, layer->mean,
                    layer->variance);
@@ -82,10 +81,10 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
    *  w*γ +β
    **/
   BatchNormTensor(layer->output, layer->output_size, layer->batch_size, layer->bn_gammas,
-                  layer->bn_betas)
+                  layer->bn_betas);
 }
 void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
-  if (net.mode == TRAIN) {
+  if (net->mode == TRAIN) {
     /**
      *  求 gamma 和 beta 的梯度
      **/
@@ -105,8 +104,8 @@ void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
      *     d = d * 1/(sqrt(v)) + (1 / batch_size) * dm + (2 / batch_size) *dv
      **/
     BnDot(layer->bn_gammas, layer->output_size, layer->batch_size, layer->delta);
-    BnMeanDelta(layer->variance, layer->delta, layer->output_size, layer->batch_size,
-                layer->mean_delta);
+    BnMeanDelta(layer->variance, layer->delta, layer->bn_gammas, layer->output_size,
+                layer->batch_size, layer->mean_delta);
     BnNormDelta(layer->output_before_norm, layer->mean, layer->variance, layer->mean_delta,
                 layer->variance_delta, layer->input_size, layer->batch_size, layer->delta);
   }
@@ -114,16 +113,16 @@ void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
 
 void BnGamaBackward(float *delta, float *output_normed, int input_size, int batch_size,
                     float *gamma_grads) {
-  for (int i = 0; i < layer->output_size; ++i) {
-    for (int j = 0; j<layer->batch_size; ++j>) {
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j<batch_size; ++j) {
       gamma_grads[i] += delta[i + input_size * j] * output_normed[i + input_size * j];
     }
   }
 }
 
 void BnBetaBackward(float *delta, int input_size, int batch_size, float *beta_grads) {
-  for (int i = 0; i < layer->output_size; ++i) {
-    for (int j = 0; j<layer->batch_size; ++j>) {
+  for (int i = 0; i < input_size; ++i) {
+    for (int j = 0; j<batch_size; ++j) {
       beta_grads[i] += delta[i + input_size * j];
     }
   }
@@ -137,7 +136,8 @@ void BnDot(float *gamma, int input_size, int batch_size, float *delta) {
   }
 }
 
-void BnMeanDelta(float *variance, float *delta, int input_size, int batch_size, float *mean_delta) {
+void BnMeanDelta(float *variance, float *delta, float *gamma, int input_size, int batch_size,
+                 float *mean_delta) {
   float eps = 1e-8;
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
@@ -150,11 +150,10 @@ void BnMeanDelta(float *variance, float *delta, int input_size, int batch_size, 
 
 void BnVaianceDelta(float *variance_delta, float *output_before_norm, float *delta, float *mean,
                     float *variance, int input_size, int batch_size) {
-  int index = i + input_size * j;
   float eps = 1e-8;
-
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
+      int index = i + input_size * j;
       variance_delta[i] += delta[index] * (output_before_norm[index] - mean[i]);
     }
     variance_delta[i] *= -.5 * pow(variance[i] + eps, (float)(-3. / 2.));
@@ -163,13 +162,13 @@ void BnVaianceDelta(float *variance_delta, float *output_before_norm, float *del
 
 void BnNormDelta(float *output_before_norm, float *mean, float *variance, float *mean_delta,
                  float *variance_delta, int input_size, int batch_size, float *delta) {
-  int index = i + input_size * j;
-  float eps = 1e-8;
 
+  float eps = 1e-8;
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
+      int index = i + input_size * j;
       delta[index] = delta[index] * 1. / (sqrt(variance[i] + index)) +
-                     variance_delta[i] * 2. * (x[index] - mean[i]) / batch_size +
+                     variance_delta[i] * 2. * (output_before_norm[index] - mean[i]) / batch_size +
                      mean_delta[i] / batch_size;
     }
   }

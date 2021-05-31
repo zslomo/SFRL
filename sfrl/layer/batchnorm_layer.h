@@ -1,10 +1,9 @@
 #ifndef BATCHNORM_LAYER_H
 #define BATCHNORM_LAYER_H
-
-#include "sfrl/activation/activation.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/network/network.h"
-#include "sfrl/utils/init.h"
+#include "base_layer.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/network/network.h"
+#include "../../sfrl/utils/init.h"
 
 /**
  *  BN
@@ -19,11 +18,12 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
 void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net);
 void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net);
 
-void BnGamaBackward(float *gamma_grads, float *delta, float *output_normed, int input_size,
-                    int batch_size);
-void BnBetaBackward(float *beta_grads, float *delta, int input_size, int batch_size);
+void BnGamaBackward(float *delta, float *output_normed, int input_size, int batch_size,
+                    float *gamma_grads);
+void BnBetaBackward(float *delta, int input_size, int batch_size, float *beta_grads);
 void BnDot(float *gamma, int input_size, int batch_size, float *delta);
-void BnMeanDelta(float *variance, float *delta, int input_size, int batch_size, float *mean_delta);
+void BnMeanDelta(float *variance, float *delta, float *gamma, int input_size, int batch_size,
+                 float *mean_delta);
 void BnVaianceDelta(float *variance_delta, float *output_before_norm, float *delta, float *mean,
                     float *variance, int input_size, int batch_size);
 void BnNormDelta(float *output_before_norm, float *mean, float *variance, float *mean_delta,

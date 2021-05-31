@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "sfrl/utils/init.h"
+#include "init.h"
 
 #define TWO_PI 6.283185307
 
