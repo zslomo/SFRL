@@ -74,9 +74,9 @@ float Train(NetWork *net, Data *data) {
 }
 
 void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset) {
-  int size = data->size_per_sample
-             // copy输入
-             for (int j = 0; j < sample_num; ++j) {
+  int size = data->size_per_sample;
+  // copy输入
+  for (int j = 0; j < sample_num; ++j) {
     memcpy(net->input, data->X + offset * j, size * sizeof(float));
   }
   // copy 标签
