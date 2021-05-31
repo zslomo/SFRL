@@ -1,6 +1,6 @@
 #ifndef ACTIVATIONS_H
 #define ACTIVATIONS_H
-#include "math.h"
+#include <math.h>
 
 // 激活函数
 typedef enum { SIGMOID, RELU, LINEAR, TANH } ActiType;

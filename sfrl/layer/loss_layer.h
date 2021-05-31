@@ -1,7 +1,7 @@
 #ifndef LOSS_LAYER_H
 #define LOSS_LAYER_H
-#include "sfrl/layer/layer.h"
-#include "sfrl/network/network.h"
+#include "base_layer.h"
+#include "../../sfrl/network/network.h"
 
 typedef Layer LossLayer;
 

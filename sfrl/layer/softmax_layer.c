@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sfrl/layer/softmax_layer.h"
-#include "sfrl/loss/loss.h"
+#include "softmax_layer.h"
+#include "../../sfrl/loss/loss.h"
 
 SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   assert(inputs % groups == 0);

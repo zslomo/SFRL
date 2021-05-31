@@ -1,11 +1,11 @@
 #ifndef NET_WORK_H
 #define NET_WORK_H
 
-#include "sfrl/activations/activations.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/optimizer/optimizer.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/layer/base_layer.h"
+#include "../../sfrl/optimizer/optimizer.h"
 
-typedef enum { TRIAN, TEST } NetMode;
+typedef enum { TRAIN, TEST } NetMode;
 
 typedef struct NetWork {
   Layer *layers;
@@ -16,15 +16,15 @@ typedef struct NetWork {
   NetMode mode;
 
   // 输入输出
-  float *input;
-  float *output;
+  float *input; // 这里的输入维护的是当前层的输入，也就是上一层的输出
+  float *output; // 这里维护的是整个网络的输出
   int input_size;
   int output_size;
   int batch_size;
   int input_processed_num; // 已经处理过的输入样本数量
 
   // 反向传播
-  float *delta;  // 注意这里, net->delta 只是指向反向传播时需要层的delta
+  float *delta; // 注意这里, net->delta 只是指向反向传播时需要层的delta
   float *error;
   // 网络空间
   float *workspace; // 架构是参考了darknet，所以这里设置了一个暂存空间

@@ -4,14 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sfrl/activations/activations.h"
-#include "sfrl/data/data.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/layer/batchnorm_layer.h"
-#include "sfrl/network/network.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/utils/blas.h"
+#include "network.h"
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/data/data.h"
+#include "../../sfrl/layer/base_layer.h"
+#include "../../sfrl/layer/batchnorm_layer.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/utils/blas.h"
 
 void FreeNetwork(network *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
@@ -39,6 +38,7 @@ float Train(NetWork *net, Data *data) {
   int loss_avg = 0;
   int batch_size = net->batch_size;
   int batch_num = input_data->batch / batch_size;
+  net->mode = TRAIN;
   float sum = 0;
   for (int i = 0; i < batch_num - 1; ++i) {
     // 拿到一个batch的数据
@@ -64,13 +64,18 @@ float Train(NetWork *net, Data *data) {
   UpdateNetwork(&net);
   sum += net->loss;
 
-  // 记得后面改回来
+  // batch_size 记得后面改回来
   net->batch_size = batch_size;
   for (int i = 0; i < net->layer_depth; ++i) {
     net->layers[i]->batch_size = batch_size;
   }
 
   return sum / (batch_num * batch_size + last_batch_size);
+}
+
+float Test(NetWork *net, Data *data) {
+  net->mode = TEST;
+
 }
 
 void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset) {

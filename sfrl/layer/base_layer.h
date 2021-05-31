@@ -1,10 +1,11 @@
 #ifndef BASE_LAYER_H
 #define BASE_LAYER_H
 
-#include "sfrl/activations/activations.h"
-#include "sfrl/layer/loss_layer.h"
-#include "sfrl/network/network.h"
-#include "stddef.h"
+#include <stddef.h>
+#include "../../sfrl/activation/activation.h"
+#include "../../sfrl/layer/loss_layer.h"
+#include "../../sfrl/network/network.h"
+
 
 /**
  * 网络结构类型，强化学习没有太复杂的结构,这里主要是全连接、卷积(类似棋盘游戏需要)

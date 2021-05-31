@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sfrl/activations/activations.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/layer/dense_layer.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/utils/blas.h"
+#include "../../sfrl/activation/activation.h"
+#include "base_layer.h"
+#include "dense_layer.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/utils/blas.h"
 
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
                           InitType init_type) {

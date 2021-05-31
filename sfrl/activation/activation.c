@@ -1,10 +1,8 @@
-
-#include "sfrl/activations/activations.h"
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "activation.h"
 
 static inline float SigmoidActivate(float x) { return 1. / (1. + exp(-x)); }
 static inline float SigmoidGradient(float x) { return (1 - x) * x; }

@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include "sfrl/layer/layer.h"
-#include "sfrl/network/network.h"
+#include "../../sfrl/layer/base_layer.h"
+#include "../../sfrl/network/network.h"
 
 void UpdateLayer(Layer *layer, NetWork *network) {
   int input_size = layer->input_size;

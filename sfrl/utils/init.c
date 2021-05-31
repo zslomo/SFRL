@@ -1,9 +1,9 @@
-#include "sfrl/utils/init.h"
 #include <float.h>
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "init.h"
 
 #define TWO_PI 6.283185307
 

@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sfrl/activations/activations.h"
-#include "sfrl/layer/base_layer.h"
-#include "sfrl/layer/batchnorm_layer.h"
-#include "sfrl/optimizer/optimizer.h"
-#include "sfrl/utils/blas.h"
+#include "../../sfrl/activation/activation.h"
+#include "base_layer.h"
+#include "batchnorm_layer.h"
+#include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/utils/blas.h"
 
 BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_size,
                                   ActiType acti_type, InitType init_type) {
@@ -52,7 +52,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
 void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
-  if (net.mode == TRIAN) {
+  if (net.mode == TRAIN) {
     MeanTensor(layer->output, layer->output_size, layer->batch_size, layer->mean);
     VarianceTensor(layer->output, layer->output_size, layer->batch_size, layer->mean,
                    layer->variance);
@@ -85,7 +85,7 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
                   layer->bn_betas)
 }
 void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
-  if (net.mode == TRIAN) {
+  if (net.mode == TRAIN) {
     /**
      *  求 gamma 和 beta 的梯度
      **/

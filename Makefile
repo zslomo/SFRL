@@ -16,21 +16,18 @@ endif
 
 CFLAGS+=$(OPTS)
 
-OBJ=blas.o activations.o maxtrix.o optimizer.o network.o base_layer.o batchnorm_layer.o dense_layer.o loss_layer.o softmax_layer.o 
+OBJ=softmax_layer.o iris.o blas.o activation.o maxtrix.o optimizer.o network.o base_layer.o batchnorm_layer.o dense_layer.o loss_layer.o metric.o data.o loader.o
 
 OBJS = $(addprefix $(OBJDIR), $(OBJ))
-DEPS = $(wildcard sfrl/*/*.h) Makefile
+DEPS = $(wildcard ./sfrl/*/*.h) Makefile
 
 all: obj backup results $(EXEC)
 
 $(EXEC): $(OBJS)
 	$(CC) $(COMMON) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(OBJDIR)%.o: %.c $(DEPS)
+$(OBJDIR)%.o: $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@
-
-$(OBJDIR)%.o: %.cu $(DEPS)
-	$(NVCC) $(ARCH) $(COMMON) --compiler-options "$(CFLAGS)" -c $< -o $@
 
 obj:
 	mkdir -p obj
