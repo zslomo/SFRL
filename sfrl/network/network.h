@@ -4,10 +4,11 @@
 #include "../../sfrl/activation/activation.h"
 #include "../../sfrl/layer/base_layer.h"
 #include "../../sfrl/optimizer/optimizer.h"
+#include "../../sfrl/loss/loss.h"
 
 typedef enum { TRAIN, TEST } NetMode;
 
-typedef struct NetWork {
+struct NetWork {
   Layer *layers;
   int layer_depth;
   float epoch;
@@ -49,15 +50,15 @@ typedef struct NetWork {
   int ground_truth_size;
   float *ground_truth;
 
-} NetWork;
+};
 
 NetWork MakeNetwork(int n);
-void FreeNetwork(network *net);
+void FreeNetwork(NetWork *net);
 
 void ForwardNetwork(NetWork *net);
 void BackWardNetwork(NetWork *net);
 void UpdateNetwork(NetWork *net);
 
-float TrainNetwork(NetWork *net, data d);
+float TrainNetwork(NetWork *net, Data d);
 
 #endif

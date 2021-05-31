@@ -2,10 +2,16 @@
 #define BASE_LAYER_H
 
 #include <stddef.h>
+#include "loss_layer.h"
 #include "../../sfrl/activation/activation.h"
-#include "../../sfrl/layer/loss_layer.h"
 #include "../../sfrl/network/network.h"
+#include "../../sfrl/loss/loss.h"
 
+struct Layer;
+typedef struct Layer Layer;
+
+struct NetWork;
+typedef struct NetWork NetWork;
 
 /**
  * 网络结构类型，强化学习没有太复杂的结构,这里主要是全连接、卷积(类似棋盘游戏需要)
@@ -84,7 +90,9 @@ struct Layer {
   void (*forward)(struct Layer *, struct NetWork *);
   void (*backward)(struct Layer *, struct NetWork *);
   void (*update)(struct Layer *, struct NetWork *);
-} Layer;
+};
+
+
 
 void UpdateLayer(Layer *layer, NetWork *network);
 void FreeLayer(Layer layer);

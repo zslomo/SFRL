@@ -12,7 +12,7 @@
 #include "../../sfrl/optimizer/optimizer.h"
 #include "../../sfrl/utils/blas.h"
 
-void FreeNetwork(network *net) {
+void FreeNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
     FreeLayer(net->layers[i]);
   }
@@ -30,14 +30,14 @@ void FreeNetwork(network *net) {
 
 NetWork MakeNetwork(int n) {
   NetWork net = {0};
-  net->layers = calloc(net->layer_depth, sizeof(Layer));
+  net.layers = calloc(net.layer_depth, sizeof(Layer));
   return net;
 }
 
 float Train(NetWork *net, Data *data) {
   int loss_avg = 0;
   int batch_size = net->batch_size;
-  int batch_num = input_data->batch / batch_size;
+  int batch_num = data->batch / batch_size;
   net->mode = TRAIN;
   float sum = 0;
   for (int i = 0; i < batch_num - 1; ++i) {
@@ -94,8 +94,8 @@ void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset) {
 void ForwardNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
     net->active_layer_index = i;
-    Layer layer = net->layers[i];
-    layer.forward(&layer, &net);
+    Layer *layer = &(net->layers[i]);
+    layer->forward(layer, &net);
     // layer 是没有 input这个成员变量的，当前层的输入就是上一层的输出
     // 所以没有必要存两份，这里直接让net->input 指向上一层的输出，当做当前层的输入就好了
     net->input = layer->output;
@@ -117,9 +117,9 @@ void BackWardNetwork(NetWork *net) {
   memcpy(net_input, net->layers[0]->inputs, net_input_size * sizeof(float));
 
   for (int i = net->layer_depth - 1; i >= 0; --i) {
-    Layer *layer = net->layers[i];
+    Layer *layer = &(net->layers[i]);
     if (i != 0) {
-      Layer *pre_layer = net->layers[i - 1];
+      Layer *pre_layer = &net->layers[i - 1]);
       net->input = pre_layer->output;
       net->delta = pre_layer->delta;
     } else {
@@ -128,7 +128,7 @@ void BackWardNetwork(NetWork *net) {
       memcpy(net->input, net_input, net_input_size * sizeof(float));
       free(net_input);
     }
-    net->index = i;
+    net->active_layer_index = i;
     layer->BackWardNetwork(&layer, &net);
   }
 }
@@ -137,7 +137,7 @@ void BackWardNetwork(NetWork *net) {
  *  没啥可说的
  **/
 void UpdateNetwork(NetWork *net) {
-  for (int i = 0; i < net->n; ++i) {
+  for (int i = 0; i < net->layer_depth; ++i) {
     Layer layer = net->layers[i];
     if (layer->UpdateLayer) {
       layer->UpdateLayer(&layer, &net);

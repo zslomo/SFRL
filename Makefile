@@ -1,7 +1,7 @@
 DEBUG=0
 
 VPATH=./sfrl/
-EXEC=sfrl
+EXEC=sfrl_obj
 OBJDIR=./obj/
 
 CC=gcc
