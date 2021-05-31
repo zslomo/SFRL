@@ -1,24 +1,24 @@
 #include <stdlib.h>
-#include "../../sfrl/layer/base_layer.h"
-#include "../../sfrl/network/network.h"
+#include "sfrl/layer/base_layer.h"
+#include "sfrl/loss/loss.h"
 
-void UpdateLayer(Layer *layer, NetWork *network) {
+void UpdateLayer(Layer *layer, NetWork *net) {
   int input_size = layer->input_size;
   int output_size = layer->output_size;
-  int batch_size = network->batch_size;
+  int batch_size = net->batch_size;
   float *weights = layer->weights;
   float *weight_grads = layer->weight_grads;
   float *biases = layer->biases;
   float *bias_grads = layer->bias_grads;
-  float *grad_cum_w = network->grad_cum_w;
-  float *grad_cum_b = network->grad_cum_b;
-  float *grad_cum_square_w = network->grad_cum_square_w;
-  float *grad_cum_square_b = network->grad_cum_square_b;
-  float lr = network->learning_rate;
-  float beta_1 = network->beta_1;
-  float beta_2 = network->beta_2;
-  float momentum = network->momentum;
-  float decay = network->decay;
+  float *grad_cum_w = net->grad_cum_w;
+  float *grad_cum_b = net->grad_cum_b;
+  float *grad_cum_square_w = net->grad_cum_square_w;
+  float *grad_cum_square_b = net->grad_cum_square_b;
+  float lr = net->learning_rate;
+  float beta_1 = net->beta_1;
+  float beta_2 = net->beta_2;
+  float momentum = net->momentum;
+  float decay = net->decay;
 
   switch (layer->acti_type) {
   case ADAM:
@@ -36,7 +36,7 @@ void UpdateLayer(Layer *layer, NetWork *network) {
   }
 }
 
-void FreeLayer(Layer layer) {
+void FreeLayer(Layer *layer) {
   if (layer->output) {
     free(layer->output);
   }
@@ -55,12 +55,17 @@ void FreeLayer(Layer layer) {
   if (layer->bias_grads) {
     free(layer->bias_grads);
   }
-
-  if (layer->scales) {
-    free(layer->scales);
+  if (layer->bn_gammas) {
+    free(layer->bn_gammas);
   }
-  if (layer->scale_updates) {
-    free(layer->scale_updates);
+  if (layer->bn_gamma_grads) {
+    free(layer->bn_gamma_grads);
+  }
+  if (layer->bn_betas) {
+    free(layer->bn_betas);
+  }
+  if (layer->bn_beta_grads) {
+    free(layer->bn_beta_grads);
   }
   if (layer->mean) {
     free(layer->mean);
@@ -80,11 +85,11 @@ void FreeLayer(Layer layer) {
   if (layer->rolling_variance) {
     free(layer->rolling_variance);
   }
-  if (layer->norm_input) {
-    free(layer->norm_input);
+  if (layer->output_normed) {
+    free(layer->output_normed);
   }
-  if (layer->norm_output) {
-    free(layer->norm_output);
+  if (layer->output_before_norm) {
+    free(layer->output_before_norm);
   }
   if (layer->drop_elem) {
     free(layer->drop_elem);

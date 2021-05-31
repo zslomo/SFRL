@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "loss_layer.h"
-#include "../../sfrl/loss/loss.h"
-#include "../../sfrl/network/network.h"
+#include "sfrl/layer/loss_layer.h"
+#include "sfrl/loss/loss.h"
+#include "sfrl/network/network.h"
 
 LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, float scale) {
   LossLayer loss_layer = {0};

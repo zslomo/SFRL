@@ -5,7 +5,7 @@
  **/
 
 #include <stdlib.h>
-#include "gemm.h"
+#include "sfrl/utils/gemm.h"
 
 #define A(i, j) a[(j)*lda + (i)]
 #define B(i, j) b[(j)*ldb + (i)]

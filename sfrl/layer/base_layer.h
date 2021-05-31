@@ -2,10 +2,8 @@
 #define BASE_LAYER_H
 
 #include <stddef.h>
-#include "loss_layer.h"
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/network/network.h"
-#include "../../sfrl/loss/loss.h"
+#include "sfrl/activation/activation.h"
+#include "sfrl/loss/loss.h"
 
 struct Layer;
 typedef struct Layer Layer;
@@ -95,6 +93,6 @@ struct Layer {
 
 
 void UpdateLayer(Layer *layer, NetWork *network);
-void FreeLayer(Layer layer);
+void FreeLayer(Layer *layer);
 
 #endif

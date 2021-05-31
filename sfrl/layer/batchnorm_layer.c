@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sfrl/activation/activation.h"
-#include "base_layer.h"
-#include "batchnorm_layer.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/utils/blas.h"
+#include "sfrl/activation/activation.h"
+#include "sfrl/layer/base_layer.h"
+#include "sfrl/layer/batchnorm_layer.h"
+#include "sfrl/optimizer/optimizer.h"
+#include "sfrl/utils/blas.h"
 
 BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_size,
                                   ActiType acti_type, InitType init_type) {
@@ -28,7 +28,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
   layer.bn_betas = calloc(output_size, sizeof(float));
   layer.bn_beta_grads = calloc(output_size, sizeof(float));
 
-  for (i = 0; i < output_size; ++i) {
+  for (int i = 0; i < output_size; ++i) {
     layer.bn_gammas[i] = 1;
   }
 

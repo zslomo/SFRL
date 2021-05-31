@@ -1,10 +1,11 @@
 #ifndef NET_WORK_H
 #define NET_WORK_H
 
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/layer/base_layer.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/loss/loss.h"
+#include "sfrl/activation/activation.h"
+#include "sfrl/layer/base_layer.h"
+#include "sfrl/optimizer/optimizer.h"
+#include "sfrl/loss/loss.h"
+#include "sfrl/data/data.h"
 
 typedef enum { TRAIN, TEST } NetMode;
 
@@ -38,8 +39,8 @@ struct NetWork {
   float learning_rate;
   float gamma;
   float scale;
-  float B1;
-  float B2;
+  float beta_1;
+  float beta_2;
   float eps;
   float *grad_cum_w; // 一些优化方法中的一阶梯度累计量
   float *grad_cum_b;
@@ -59,6 +60,6 @@ void ForwardNetwork(NetWork *net);
 void BackWardNetwork(NetWork *net);
 void UpdateNetwork(NetWork *net);
 
-float TrainNetwork(NetWork *net, Data d);
+float TrainNetwork(NetWork *net, Data *data);
 
 #endif

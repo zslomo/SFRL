@@ -1,8 +1,8 @@
 #ifndef SOFTMAX_LAYER_H
 #define SOFTMAX_LAYER_H
 
-#include "base_layer.h"
-#include "../../sfrl/network/network.h"
+#include "sfrl/layer/base_layer.h"
+#include "sfrl/network/network.h"
 
 typedef Layer SoftmaxLayer;
 

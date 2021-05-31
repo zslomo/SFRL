@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "network.h"
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/data/data.h"
-#include "../../sfrl/layer/base_layer.h"
-#include "../../sfrl/layer/batchnorm_layer.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/utils/blas.h"
+#include "sfrl/network/network.h"
+#include "sfrl/activation/activation.h"
+#include "sfrl/data/data.h"
+#include "sfrl/layer/base_layer.h"
+#include "sfrl/layer/batchnorm_layer.h"
+#include "sfrl/optimizer/optimizer.h"
+#include "sfrl/utils/blas.h"
 
 void FreeNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {

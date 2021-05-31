@@ -16,7 +16,8 @@ endif
 
 CFLAGS+=$(OPTS)
 
-OBJ=softmax_layer.o iris.o blas.o activation.o maxtrix.o optimizer.o network.o base_layer.o batchnorm_layer.o dense_layer.o loss_layer.o metric.o data.o loader.o
+OBJ=softmax_layer.o iris.o blas.o activation.o optimizer.o network.o base_layer.o batchnorm_layer.o dense_layer.o loss_layer.o metric.o data.o loader.o
+
 
 OBJS = $(addprefix $(OBJDIR), $(OBJ))
 DEPS = $(wildcard ./sfrl/*/*.h) Makefile

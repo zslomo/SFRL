@@ -1,10 +1,10 @@
 #ifndef DENSE_LAYER_H
 #define DENSE_LAYER_H
 
-#include "../../sfrl/activation/activation.h"
-#include "base_layer.h"
-#include "../../sfrl/network/network.h"
-#include "../../sfrl/utils/init.h"
+#include "sfrl/activation/activation.h"
+#include "sfrl/layer/base_layer.h"
+#include "sfrl/network/network.h"
+#include "sfrl/utils/init.h"
 
 typedef Layer DenseLayer;
 

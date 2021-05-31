@@ -6,14 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #include "../../../sfrl/activation/activation.h"
-// #include "../../../sfrl/data/data.h"
-// #include "../../../sfrl/layer/base_layer.h"
-// #include "../../../sfrl/layer/batchnorm_layer.h"
-// #include "../../../sfrl/network/network.h"
-// #include "../../../sfrl/optimizer/optimizer.h"
-// #include "../../../sfrl/utils/blas.h"
-#include "../../../sfrl/loader/loader.h"
+// #include "../sfrl/activation/activation.h"
+// #include "../sfrl/data/data.h"
+// #include "../sfrl/layer/base_layer.h"
+// #include "../sfrl/layer/batchnorm_layer.h"
+// #include "../sfrl/network/network.h"
+// #include "../sfrl/optimizer/optimizer.h"
+// #include "../sfrl/utils/blas.h"
+#include "../sfrl/loader/loader.h"
 
 float *ReadData(char *filename);
 
