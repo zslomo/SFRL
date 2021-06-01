@@ -34,7 +34,7 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   return layer;
 }
 
-void UpdateDenseLayer(DenseLayer *layer, NetWork *net) { UpdateLayer(&layer, &net); }
+void UpdateDenseLayer(DenseLayer *layer, NetWork *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, NetWork *net) {
   // 最终输出的是一个flat后的一维tensor 大小是output_size * batch_size

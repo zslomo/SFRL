@@ -4,8 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "softmax_layer.h"
 #include "../../sfrl/loss/loss.h"
+#include "../../sfrl/utils/blas.h"
+#include "softmax_layer.h"
 
 SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   SoftmaxLayer layer = {0};
@@ -23,12 +24,12 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   return layer;
 }
 
-void ForwardSoftmaxLayer(const SoftmaxLayer *layer, NetWork *net) {
+void ForwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
   SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->input_size,
                layer->temperature, layer->output);
 }
 
-void BackwardSoftmaxLayer(const SoftmaxLayer *layer, NetWork *net) {
+void BackwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
   BackwardSoftmax(layer->output, layer->delta, layer->input_size, layer->batch_size,
@@ -79,21 +80,24 @@ void SoftmaxBatch(float *input, int n, int batch_size, int batch_offset, float t
 /**
  * softmax 的反向传播函数
  * */
-void BackwardSoftmaxCore(float *output, float *delta_output, int n, float temp,
-                         float *delta_input) {
-  float dot = dotTensor(n, output, delta_output);
+void BackwardSoftmaxCore(float *output, float *layer_delta, int n, float temp,
+                         float *net_delta) {
+  float dot = 0;
+  for (int i = 0; i < n; ++i) {
+    dot += layer_delta[i] * output[i];
+  }
   float temp_inv = 1.0 / temp;
   for (int i = 0; i < n; ++i) {
-    delta_input[i] += temp_inv * output[i] * (delta_output[i] - dot);
+    net_delta[i] += temp_inv * output[i] * (layer_delta[i] - dot);
   }
 }
 
-void BackwardSoftmax(float *output, float *delta_output, int n, int batch_size, int batch_offset,
-                     float temp, float *delta_input) {
+void BackwardSoftmax(float *output, float *layer_delta, int n, int batch_size, int batch_offset,
+                     float temp, float *net_delta) {
   int g, b;
   int offset;
   for (int i = 0; i < batch_size; ++i) {
     int offset = i * batch_offset;
-    BackwardSoftmaxCore(output + offset, delta_output + offset, n, temp, delta_input + offset);
+    BackwardSoftmaxCore(output + offset, layer_delta + offset, n, temp, net_delta + offset);
   }
 }

@@ -59,7 +59,7 @@ void FreeNetwork(NetWork *net);
 void ForwardNetwork(NetWork *net);
 void BackWardNetwork(NetWork *net);
 void UpdateNetwork(NetWork *net);
-
+void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset);
 float TrainNetwork(NetWork *net, Data *data);
 
 #endif

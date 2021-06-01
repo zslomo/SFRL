@@ -25,7 +25,7 @@ LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type) {
   loss_layer.backward = BackwardLossLayer;
 }
 
-ForwardLossLayer(LossLayer *loss_layer, NetWork *net) {
+void ForwardLossLayer(LossLayer *loss_layer, NetWork *net) {
   assert(net->ground_truth);
   int n = loss_layer->batch_size * loss_layer->input_size;
   // loss层是最后一层，在forward的时候记录一下整个网络的输出，用来计算metric

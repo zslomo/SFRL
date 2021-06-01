@@ -42,11 +42,11 @@ float Train(NetWork *net, Data *data) {
   float sum = 0;
   for (int i = 0; i < batch_num - 1; ++i) {
     // 拿到一个batch的数据
-    GetNextBatchData(&data, &net, batch_size, batch_size * i);
+    GetNextBatchData(data, net, batch_size, batch_size * i);
     net->batch_trained_cnt += batch_size;
-    ForwardNetwork(&net);
-    BackWardNetwork(&net);
-    UpdateNetwork(&net);
+    ForwardNetwork(net);
+    BackWardNetwork(net);
+    UpdateNetwork(net);
     sum += net->loss;
   }
   // 处理最后一个batch
@@ -57,11 +57,11 @@ float Train(NetWork *net, Data *data) {
     net->layers[i]->batch_size = last_batch_size;
   }
   // 最后一个不够 batch_size 的 batch 需要单独处理
-  GetNextBatchData(&data, &net, last_batch_size, batch_size * (batch_num - 2));
+  GetNextBatchData(data, net, last_batch_size, batch_size * (batch_num - 2));
   net->batch_trained_cnt++;
-  ForwardNetwork(&net);
-  BackWardNetwork(&net);
-  UpdateNetwork(&net);
+  ForwardNetwork(net);
+  BackWardNetwork(net);
+  UpdateNetwork(net);
   sum += net->loss;
 
   // batch_size 记得后面改回来
@@ -91,8 +91,8 @@ void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset) {
 void ForwardNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
     net->active_layer_index = i;
-    Layer *layer = &(net->layers[i]);
-    layer->forward(layer, &net);
+    Layer *layer = (net->layers[i]);
+    layer->forward(layer, net);
     // layer 是没有 input这个成员变量的，当前层的输入就是上一层的输出
     // 所以没有必要存两份，这里直接让net->input 指向上一层的输出，当做当前层的输入就好了
     net->input = layer->output;
@@ -111,12 +111,12 @@ void BackWardNetwork(NetWork *net) {
   // 先暂存一下整个网络的输入
   int net_input_size = net->layers[0]->input_size;
   float *net_input = calloc(net_input_size, sizeof(float));
-  memcpy(net_input, net->layers[0]->inputs, net_input_size * sizeof(float));
+  memcpy(net_input, net->input, net_input_size * sizeof(float));
 
   for (int i = net->layer_depth - 1; i >= 0; --i) {
-    Layer *layer = &(net->layers[i]);
+    Layer *layer = net->layers[i];
     if (i != 0) {
-      Layer *pre_layer = &net->layers[i - 1]);
+      Layer *pre_layer = net->layers[i - 1];
       net->input = pre_layer->output;
       net->delta = pre_layer->delta;
     } else {
@@ -126,7 +126,7 @@ void BackWardNetwork(NetWork *net) {
       free(net_input);
     }
     net->active_layer_index = i;
-    layer->BackWardNetwork(&layer, &net);
+    layer->backward(layer, net);
   }
 }
 /**
@@ -135,9 +135,9 @@ void BackWardNetwork(NetWork *net) {
  **/
 void UpdateNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
-    Layer layer = net->layers[i];
-    if (layer->UpdateLayer) {
-      layer->UpdateLayer(&layer, &net);
+    Layer *layer = net->layers[i];
+    if (layer->update) {
+      layer->update(layer, net);
     }
   }
 }

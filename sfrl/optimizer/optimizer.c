@@ -2,7 +2,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "optimizer.h"
+#include "../../sfrl/utils/blas.h"
 
 void SgdOptimizer(int input_size, int output_size, float *weights,
                   float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
@@ -32,7 +34,7 @@ void SgdOptimizer(int input_size, int output_size, float *weights,
   free(grad_tmp);
 
   // weight
-  float *grad_tmp = calloc(w_size, sizeof(float));
+  grad_tmp = calloc(w_size, sizeof(float));
   memcpy(grad_tmp, grad_cum_w, w_size * sizeof(float));
   // ρVt-1
   ScalTensor(w_size, momentum, grad_tmp);
@@ -73,7 +75,7 @@ void AdaGradOptimizer(int input_size, int output_size, float *weights,
     SquareTensor(b_size, bias_grads, grad_tmp);
     AxpyTensor(b_size, 1, grad_tmp, grad_cum_square_b);
     free(grad_tmp);
-    float *grad_tmp = calloc(b_size, sizeof(float));
+    grad_tmp = calloc(b_size, sizeof(float));
     SquareTensor(w_size, weight_grads, grad_tmp);
     AxpyTensor(w_size, 1, grad_tmp, grad_cum_square_w);
     free(grad_tmp);
@@ -86,7 +88,7 @@ void AdaGradOptimizer(int input_size, int output_size, float *weights,
   free(increment_tmp);
 
   // weight
-  float *increment_tmp = calloc(w_size, sizeof(float));
+  increment_tmp = calloc(w_size, sizeof(float));
   DivTensor(w_size, eps, 1, grad_cum_square_w, increment_tmp);
   AxpyTensor(w_size, -lr, weight_grads, weights);
   free(increment_tmp);
@@ -123,7 +125,7 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights,
     AxpyTensor(b_size, 1, grad_tmp, grad_cum_square_b);
     free(grad_tmp);
 
-    float *grad_tmp = calloc(b_size, sizeof(float));
+    grad_tmp = calloc(b_size, sizeof(float));
     SquareTensor(w_size, weight_grads, grad_tmp);
     ScalTensor(w_size, 1 - decay, grad_tmp);
     ScalTensor(w_size, decay, grad_cum_square_w);
@@ -141,7 +143,7 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights,
   free(increment_tmp);
 
   // weight
-  float *increment_tmp = calloc(w_size, sizeof(float));
+  increment_tmp = calloc(w_size, sizeof(float));
   AxpyTensor(w_size, eps, grad_cum_square_w, increment_tmp);
   SqrtTensor(w_size, increment_tmp, increment_tmp);
   DivTensor(w_size, 0, 1, increment_tmp, increment_tmp);
@@ -182,7 +184,7 @@ void AdamOptimizer(int input_size, int output_size, float *weights,
   }
 
   if (grad_cum_b && grad_cum_square_b) {
-    float grad_tmp = calloc(b_size, sizeof(float));
+    float *grad_tmp = calloc(b_size, sizeof(float));
     // Mt = Mt-1 + (1 - β1) * g
     AxpyTensor(b_size, 1 - beta_1, bias_grads, grad_tmp);
     AxpyTensor(b_size, 1, grad_tmp, grad_cum_b);
@@ -190,8 +192,8 @@ void AdamOptimizer(int input_size, int output_size, float *weights,
     ScalTensor(b_size, 1 / (1 - beta_1), m_hat_b);
     free(grad_tmp);
     // Vt = Vt-1 + (1 - β2) * g*g
-    float *grad_tmp = calloc(b_size, sizeof(float));
-    SquareTensor(bias_grads, grad_tmp);
+    grad_tmp = calloc(b_size, sizeof(float));
+    SquareTensor(b_size, bias_grads, grad_tmp);
     ScalTensor(b_size, 1 - beta_2, grad_tmp);
     AxpyTensor(b_size, 1, grad_tmp, grad_cum_square_b);
     // V_hat = Vt / (1 - β2)
@@ -219,7 +221,7 @@ void AdamOptimizer(int input_size, int output_size, float *weights,
   }
 
   if (grad_cum_w && grad_cum_square_w) {
-    float grad_tmp = calloc(w_size, sizeof(float));
+    float *grad_tmp = calloc(w_size, sizeof(float));
     // Mt = Mt-1 + (1 - β1) * g
     AxpyTensor(w_size, 1 - beta_1, weight_grads, grad_tmp);
     AxpyTensor(w_size, 1, grad_tmp, grad_cum_w);
@@ -227,8 +229,8 @@ void AdamOptimizer(int input_size, int output_size, float *weights,
     ScalTensor(w_size, 1 / (1 - beta_1), m_hat_w);
     free(grad_tmp);
     // Vt = Vt-1 + (1 - β2) * g*g
-    float *grad_tmp = calloc(w_size, sizeof(float));
-    SquareTensor(weight_grads, grad_tmp);
+    grad_tmp = calloc(w_size, sizeof(float));
+    SquareTensor(w_size, weight_grads, grad_tmp);
     ScalTensor(w_size, 1 - beta_2, grad_tmp);
     AxpyTensor(w_size, 1, grad_tmp, grad_cum_square_w);
     // V_hat = Vt / (1 - β2)
