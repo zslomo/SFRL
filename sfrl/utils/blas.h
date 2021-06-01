@@ -1,6 +1,6 @@
 #ifndef BLAS_H
 #define BLAS_H
-
+#include <stddef.h>
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
  *  参数：
@@ -48,5 +48,6 @@ void MeanTensor(float *TensorX, int input_size, int batch_size, float *mean);
 void VarianceTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance);
 void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance);
 void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamma, float *beta);
+void ShuffleArray(void *array, size_t array_size, size_t elem_size);
 
 #endif

@@ -1,8 +1,10 @@
+#include "blas.h"
+#include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
-#include <assert.h>
-#include "blas.h"
+#include <string.h>
+
 /**
  *  初级的gemm算法，没有经过4×4加速，C = ALPHA * A * B + BETA * C
  *  参数：
@@ -200,5 +202,22 @@ void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamm
 void InitTensor(int size, float ALPHA, float *TensorX) {
   for (int i = 0; i < size; ++i) {
     TensorX[i] = ALPHA;
+  }
+}
+
+/**
+ *  knuth 的shuffle 算法
+ **/
+void ShuffleArray(void *array, size_t array_size, size_t elem_size) {
+  assert(array_size > 1);
+  char tmp[elem_size];
+  char *arr = array;
+  size_t stride = elem_size * sizeof(char);
+  for (size_t i = 0; i < array_size - 1; ++i) {
+    size_t rnd = (size_t)rand();
+    size_t j = i + rnd / (RAND_MAX / (array_size - i) + 1);
+    memcpy(tmp, arr + j * stride, elem_size);
+    memcpy(arr + j * stride, arr + i * stride, elem_size);
+    memcpy(arr + i * stride, tmp, elem_size);
   }
 }

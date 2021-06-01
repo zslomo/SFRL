@@ -37,7 +37,7 @@ NetWork MakeNetwork(int n) {
 float Train(NetWork *net, Data *data) {
   int loss_avg = 0;
   int batch_size = net->batch_size;
-  int batch_num = data->batch / batch_size;
+  int batch_num = data->size / batch_size;
   net->mode = TRAIN;
   float sum = 0;
   for (int i = 0; i < batch_num - 1; ++i) {
@@ -51,7 +51,7 @@ float Train(NetWork *net, Data *data) {
   }
   // 处理最后一个batch
   // 要改掉所有的 batch_size
-  int last_batch_size = data->last_batch;
+  int last_batch_size = data->size % batch_size;
   net->batch_size = last_batch_size;
   for (int i = 0; i < net->layer_depth; ++i) {
     net->layers[i]->batch_size = last_batch_size;

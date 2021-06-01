@@ -12,22 +12,18 @@ typedef struct Data {
   float *X;
   float *Y;
   // 输入的维度
-  int dims;
   // 维度一般有几种
   // 1 普通机器学习 2维 (batch_size, features)
   // 2 rnn        3维 (batch_size, time_step, features)
   // 3 cnn        4维 (batch_size, width, height, channel)
-  int batch;
-  // batch_size 一般是不能整除的，最后一个batch的数据如果存在原来的X Y里会处理不便
-  // 这里直接开了一个新的指针存放最后一个batch的数据
-  // 维度方面其他维度是一样的，只用新增 last_batch 就可以
-  int last_batch;
-  int d2, d3, d4;
+  int dims;
+  int size;
   // 每个样本的数据占多大
   // 其实就是看有几个维度就吧对应的dn连成起来
   int size_per_sample;
 } Data;
 
 void FreeData(Data *data);
+void PrintData(Data *data);
 
 #endif
