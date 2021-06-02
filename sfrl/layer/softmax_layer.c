@@ -12,12 +12,12 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   SoftmaxLayer layer = {0};
   layer.layer_type = SOFTMAX;
   layer.batch_size = batch_size;
-  layer.input_size = input_size; // softmax_layer的输入输出元素相同
+  layer.input_size = input_size; // softmax_layer的输入输出元素相同 其实就是类别个数
   layer.output_size = input_size;
 
   layer.output = calloc(input_size * batch_size, sizeof(float));
   layer.delta = calloc(input_size * batch_size, sizeof(float));
-
+  layer.temperature = 1.0;
   layer.forward = ForwardSoftmaxLayer;
   layer.backward = BackwardSoftmaxLayer;
 
@@ -25,15 +25,21 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
 }
 
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
-  SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->input_size,
-               layer->temperature, layer->output);
+  SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->temperature, layer->output);
+  printf("softmax output: ");
+  for (int i = 0; i < net->batch_size; ++i) {
+    for (int j = 0; j < layer->input_size; ++j) {
+      printf("%f ", layer->output[j * i + j]);
+    }
+    printf("\b, ");
+  }
+  printf("\b\n");
 }
 
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
-  BackwardSoftmax(layer->output, layer->delta, layer->input_size, layer->batch_size,
-                  layer->input_size, layer->temperature, net->delta);
+  BackwardSoftmax(layer->delta, layer->input_size, layer->batch_size, net->delta);
 }
 
 /**
@@ -66,38 +72,24 @@ void SoftmaxCore(float *input, int n, float temp, float *output) {
 /**
  *  batch softmax函数，分batch 计算softmax，由softmax layer调用
  *  batch_size 指的是每个batch的大小，
- *  batch_offset
- * 指的是输入的每个tensor的大小，因为都被flat到一维数组，需要该参数确定下一个tensor的位置
+ *  n 是分类个数
  * */
-void SoftmaxBatch(float *input, int n, int batch_size, int batch_offset, float temp,
-                  float *output) {
+void SoftmaxBatch(float *input, int n, int batch_size, float temp, float *output) {
   for (int i = 0; i < batch_size; ++i) {
-    int offset = i * batch_offset;
+    int offset = i * n;
     SoftmaxCore(input + offset, n, temp, output + offset);
   }
 }
 
 /**
  * softmax 的反向传播函数
+ * 这里就简单多了，CE的loss就是SoftMax + CE形式下的，相当于在CE里已经算好啦
+ * 所以这里的倒数就是上一步的，
  * */
-void BackwardSoftmaxCore(float *output, float *layer_delta, int n, float temp,
-                         float *net_delta) {
-  float dot = 0;
-  for (int i = 0; i < n; ++i) {
-    dot += layer_delta[i] * output[i];
-  }
-  float temp_inv = 1.0 / temp;
-  for (int i = 0; i < n; ++i) {
-    net_delta[i] += temp_inv * output[i] * (layer_delta[i] - dot);
-  }
-}
 
-void BackwardSoftmax(float *output, float *layer_delta, int n, int batch_size, int batch_offset,
-                     float temp, float *net_delta) {
-  int g, b;
+void BackwardSoftmax(float *layer_delta, int n, int batch_size, float *net_delta) {
   int offset;
-  for (int i = 0; i < batch_size; ++i) {
-    int offset = i * batch_offset;
-    BackwardSoftmaxCore(output + offset, layer_delta + offset, n, temp, net_delta + offset);
+  for (int i = 0; i < batch_size * n; ++i) {
+    net_delta[i] = layer_delta[i];
   }
 }

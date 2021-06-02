@@ -76,7 +76,7 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
   /**
    *  计算 delta
    *  delta = f'(x) * delta_tmp
-   *  ndelta_tmp 是前一层计算好的 delta_tmp = delta(i+1) × weights
+   *  delta_tmp 是前一层计算好的 delta_tmp = delta(i+1) × weights
    **/
   GradientTensor(layer->output, output_tensor_size, layer->acti_type, layer->delta);
 
@@ -85,6 +85,7 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
    **/
   for (int i = 0; i < layer->batch_size; ++i) {
     AxpyTensor(layer->output_size, 1, layer->delta + i * layer->output_size, layer->bias_grads);
+    // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
 
   /**
@@ -106,10 +107,10 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
   /**
    *  计算 后一层的delta，即net->delta
    *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
-   *  就可以直接用(f'(x) * delta)->T × input算出来了 注意最后一层的时候是没有后一层的，此时 net->delta == null 
-   *  不需要计算 net->delta = delta_tmp = delta × weights 维度是 M*K × K*N = M*N A delta M*K B
-   *  weights K*N C net->delta M*N M batch_size A的行 N ldb ldc input_size, B的列 K lda output_size,
-   *  A的列 B的行 ALPHA 和 BETA这里都是1
+   *  就可以直接用(f'(x) * delta)->T × input算出来了 注意最后一层的时候是没有后一层的，此时
+   *net->delta == null 不需要计算 net->delta = delta_tmp = delta × weights 维度是 M*K × K*N = M*N A
+   *delta M*K B weights K*N C net->delta M*N M batch_size A的行 N ldb ldc input_size, B的列 K lda
+   *output_size, A的列 B的行 ALPHA 和 BETA这里都是1
    **/
   if (net->delta) {
     int TransA = 0;

@@ -17,10 +17,10 @@ typedef struct Data {
   // 2 rnn        3维 (batch_size, time_step, features)
   // 3 cnn        4维 (batch_size, width, height, channel)
   int dims;
-  int size;
+  int sample_num;
   // 每个样本的数据占多大
   // 其实就是看有几个维度就吧对应的dn连成起来
-  int size_per_sample;
+  int sample_size;
 } Data;
 
 void FreeData(Data *data);

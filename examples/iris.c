@@ -10,47 +10,26 @@
 #include "../sfrl/data/data.h"
 #include "../sfrl/layer/base_layer.h"
 #include "../sfrl/layer/batchnorm_layer.h"
+#include "../sfrl/layer/dense_layer.h"
+#include "../sfrl/layer/loss_layer.h"
+#include "../sfrl/layer/softmax_layer.h"
 #include "../sfrl/loader/loader.h"
 #include "../sfrl/network/network.h"
 #include "../sfrl/optimizer/optimizer.h"
 #include "../sfrl/utils/blas.h"
 
-void ReadData(char *filename);
-
-int main(int argc, char **argv) {
-  printf("Read data...\n");
-  ReadData("../data/iris/iris.data");
-}
-
-void ReadData(char *filename) {
-  FILE *file = fopen(filename, "r");
-  if (file == 0) {
-    printf("read file %s error", filename);
-  }
-  char *line;
+Data BuildInput(char **samples, int sample_num) {
   Data data = {0};
   data.dims = 2;
-  data.size_per_sample = 4;
-  int init_size = 255;  
-  int sample_size = -1;
-  char **samples = malloc(init_size * sizeof(char *));
-  while ((line = FileGetLine(file)) != 0) {
-    Strip(line);
-    samples[++sample_size] = line;
-    if (sample_size == init_size) {
-      init_size *= 2;
-      samples = realloc(samples, init_size * sizeof(char *));
-    }
-  }
-  data.size = sample_size + 1;
-  samples = realloc(samples, data.size * sizeof(char *));
-  data.X = calloc(data.size_per_sample * data.size, sizeof(float));
-  data.Y = calloc(data.size, sizeof(float));
+  data.sample_size = 4;
+  data.sample_num = sample_num;
+  data.X = calloc(data.sample_size * data.sample_num, sizeof(float));
+  data.Y = calloc(data.sample_num, sizeof(float));
 
-  printf("size = %d \n", data.size);
+  // printf("size = %d \n", data.sample_num);
   // printf("sample : %s \n", samples[9]);
-  for (int i = 0; i < data.size; ++i) {
-    printf("line %d: %s\n", i, samples[i]);
+  for (int i = 0; i < data.sample_num; ++i) {
+    // printf("line %d: %s\n", i, samples[i]);
     char **tokens = StrSplit(samples[i], ",");
     for (int j = 0; j < 4; ++j) {
       data.X[i * 4 + j] = atof(tokens[j]);
@@ -61,9 +40,55 @@ void ReadData(char *filename) {
       data.Y[i] = 2;
     }
   }
-  fclose(file);
-  int batch_num = data.size / 16;
-  int last_batch_size = data.size % 16;
+  int batch_num = data.sample_num / 16;
+  int last_batch_size = data.sample_num % 16;
+  // PrintData(&data);
+  return data;
+}
 
-  PrintData(&data);
+int ReadData(char *filename, char **samples) {
+  FILE *file = fopen(filename, "r");
+  if (file == 0) {
+    printf("read file %s error", filename);
+  }
+  char *line;
+  int init_size = 255;
+  int sample_num = -1;
+  while ((line = FileGetLine(file)) != 0) {
+    Strip(line);
+    samples[++sample_num] = line;
+    if (sample_num + 1 == init_size) {
+      init_size *= 2;
+      samples = realloc(samples, init_size * sizeof(char *));
+    }
+  }
+  fclose(file);
+  return sample_num + 1;
+}
+
+int BuildNet(Data *data, NetWork *net) {
+  int batch_size = 16;
+  DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 32, RELU, NORMAL);
+  DenseLayer dnn_2 = MakeDenseLayer(batch_size, 32, 2, RELU, NORMAL);
+  SoftmaxLayer sm_1 = MakeSoftmaxLayer(batch_size, 2);
+  LossLayer loss_layer = MakeLossLayer(batch_size, 2, CE);
+
+  net->batch_size = batch_size;
+  net->sample_size = data->sample_size;
+  net->layers[0] = &dnn_1;
+  net->layers[1] = &dnn_2;
+  net->layers[2] = &sm_1;
+  net->layers[3] = &loss_layer;
+  printf("start train...\n");
+  net->learning_rate = 0.1;
+  net->train(net, data, RMSPROP);
+}
+int main(int argc, char **argv) {
+  printf("Read data...\n");
+  char **samples = malloc(255 * sizeof(char *));
+  int sample_num = ReadData("../data/iris/iris.data", samples);
+  printf("get sample done...\n");
+  Data data = BuildInput(samples, sample_num);
+  NetWork net = MakeNetwork(4);
+  BuildNet(&data, &net);
 }

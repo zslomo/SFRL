@@ -118,7 +118,7 @@ char **StrSplit(char *str, char *delim) {
 //   printf("str = \"%s\"\n", str);
   result = realloc(result, res_index * sizeof(char *));
   for (int i = 0; i < res_index; ++i){
-      printf("str = \"%s\"\n", result[i]);
+    //   printf("str = \"%s\"\n", result[i]);
   }
     return result;
 }
