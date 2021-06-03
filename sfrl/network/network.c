@@ -55,9 +55,9 @@ char *GetLayerTypeStr(LayerType layer_type) {
     layer_type_str = "SoftMax";
   } else if (layer_type == DROPOUT) {
     layer_type_str = "DropOut";
-  }else if (layer_type == ACTIVATION) {
+  } else if (layer_type == ACTIVATION) {
     layer_type_str = "Activation";
-  }else if (layer_type == LOSS) {
+  } else if (layer_type == LOSS) {
     layer_type_str = "Loss";
   } else {
     layer_type_str = "error";
@@ -143,13 +143,21 @@ float Train(NetWork *net, Data *data, OptType opt_type) {
   net->opt_type = opt_type;
   float sum = 0;
   PrintNetWork(*net);
+  
   net->input_size = batch_size * data->sample_size;
   net->origin_input = malloc(net->input_size * sizeof(float));
   net->ground_truth = malloc(batch_size * sizeof(float));
+  
   for (int i = 0; i < batch_num - 1; ++i) {
     // 拿到一个batch的数据
-    printf("batch %d start...\n", i);
     GetNextBatchData(data, net, batch_size, batch_size * i);
+    printf("batch %d start...\n", i);
+    for (int j = 0; j < batch_size; ++j) {
+      for (int k = 0; k < data->sample_size; ++k) {
+        printf("%d,", net->input[j * k + k]);
+      }
+      printf("%f\n", net->ground_truth[j]);
+    }
     printf("batch %d get data done.\n", i);
     net->batch_trained_cnt += batch_size;
     ForwardNetwork(net);
@@ -220,12 +228,12 @@ void ForwardNetwork(NetWork *net) {
     // layer 是没有 input这个成员变量的，当前层的输入就是上一层的输出
     // 所以没有必要存两份，这里直接让net->input 指向上一层的输出，当做当前层的输入就好了
     net->input = layer->output;
-  } 
+  }
   printf("loss: ");
   for (int i = 0; i < net->batch_size; ++i) {
     printf("%f,", net->input[i]);
   }
-  printf("\n"); 
+  printf("\n");
 }
 /**
  *  反向传播部分，维护一个delta来实现链式求导法则，delta是输入的导数

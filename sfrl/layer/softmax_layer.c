@@ -27,19 +27,30 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
   SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->temperature, layer->output);
   printf("softmax output: ");
-  for (int i = 0; i < net->batch_size; ++i) {
-    for (int j = 0; j < layer->input_size; ++j) {
-      printf("%f ", layer->output[j * i + j]);
-    }
-    printf("\b, ");
-  }
-  printf("\b\n");
+  // for (int i = 0; i < net->batch_size * layer->input_size; ++i) {
+  //   printf("%f ", layer->output[i]);
+  // }
+  // printf("\b\n");
 }
 
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
   BackwardSoftmax(layer->delta, layer->input_size, layer->batch_size, net->delta);
+}
+
+/**
+ *  batch softmax函数，分batch 计算softmax，由softmax layer调用
+ *  batch_size 指的是每个batch的大小，
+ *  n 是分类个数
+ * */
+void SoftmaxBatch(float *input, int n, int batch_size, float temp, float *output) {
+  for (int i = 0; i < batch_size; ++i) {
+    int offset = i * n;
+    // printf("sample: %d, offset: %d\n", i, offset);
+    // printf("intput : %f, %f\n", (input + offset)[0], (input + offset)[1]);
+    SoftmaxCore(input + offset, n, temp, output + offset);
+  }
 }
 
 /**
@@ -66,18 +77,6 @@ void SoftmaxCore(float *input, int n, float temp, float *output) {
   // 归一化转换为概率
   for (int i = 0; i < n; ++i) {
     output[i] /= sum;
-  }
-}
-
-/**
- *  batch softmax函数，分batch 计算softmax，由softmax layer调用
- *  batch_size 指的是每个batch的大小，
- *  n 是分类个数
- * */
-void SoftmaxBatch(float *input, int n, int batch_size, float temp, float *output) {
-  for (int i = 0; i < batch_size; ++i) {
-    int offset = i * n;
-    SoftmaxCore(input + offset, n, temp, output + offset);
   }
 }
 

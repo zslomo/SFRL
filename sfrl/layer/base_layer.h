@@ -46,7 +46,6 @@ struct Layer {
    * */
   // float *input;
   float *output;
-  float *error;
   int input_size;
   int output_size;
   int batch_size;

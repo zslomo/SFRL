@@ -35,9 +35,9 @@ Data BuildInput(char **samples, int sample_num) {
       data.X[i * 4 + j] = atof(tokens[j]);
     }
     if (strcmp(tokens[4], "Iris-setosa")) {
-      data.Y[i] = 1;
+      data.Y[i] = 0;
     } else {
-      data.Y[i] = 2;
+      data.Y[i] = 1;
     }
   }
   int batch_num = data.sample_num / 16;
