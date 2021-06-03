@@ -1,11 +1,11 @@
 #ifndef NET_WORK_H
 #define NET_WORK_H
 
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/layer/base_layer.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/loss/loss.h"
-#include "../../sfrl/data/data.h"
+#include "../activation/activation.h"
+#include "../layer/base_layer.h"
+#include "../optimizer/optimizer.h"
+#include "../loss/loss.h"
+#include "../data/data.h"
 
 typedef enum { TRAIN, TEST } NetMode;
 
@@ -54,17 +54,12 @@ struct NetWork {
 
 NetWork MakeNetwork(int n);
 void FreeNetwork(NetWork *net);
-
 void ForwardNetwork(NetWork *net);
 void BackWardNetwork(NetWork *net);
 void UpdateNetwork(NetWork *net);
 void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset);
 float Train(NetWork *net, Data *data, OptType opt_type);
 float Test(NetWork *net, Data *data);
-char *GetLayerTypeStr(LayerType layer_type);
-char *GetActivationTypeStr(ActiType acti_type);
-char *GetLossStr(LossType loss_type);
-char *GetOptimizerStr(OptType opt_type);
 void PrintNetWork(NetWork net);
 
 #endif

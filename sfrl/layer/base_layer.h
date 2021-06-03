@@ -1,9 +1,9 @@
 #ifndef BASE_LAYER_H
 #define BASE_LAYER_H
 
+#include "../activation/activation.h"
+#include "../loss/loss.h"
 #include <stddef.h>
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/loss/loss.h"
 
 struct Layer;
 typedef struct Layer Layer;
@@ -37,14 +37,18 @@ struct Layer {
 
   int batch_normalize;
   /**
-   * 输入输出
-   * 这里是个值得探讨的地方，在darnet的实现中 layer
-   * 是不维护input只维护output的，network结构中会维护当前层的input 其实维护input是一个很冗余的事情：
-   *   1 上一层的output跟下一层的
-   * input一样，所以维护两个一样的数据意义不大，通过指针链接两个层其实可以方便的拿到上层的输出 2
-   * 对于网络来说，输入输出没有什么意义，只是在更新参数，理论上只需要维护当前活跃层的输入输出即可，可以节省很多空间
+   *  输入输出
+   *  这里是个值得探讨的地方，在darnet的实现中 layer
+   *  是不维护input只维护output的，network结构中会维护当前层的input
+   * 其实维护input是一个很冗余的事情： 1 上一层的output跟下一层的
+   *  input一样，所以维护两个一样的数据意义不大，通过指针链接两个层其实可以方便的拿到上层的输出 2
+   *  对于网络来说，输入输出没有什么意义，只是在更新参数，理论上只需要维护当前活跃层的输入输出即可，可以节省很多空间
+   *  But !
+   *  But!!!!!!!!
+   *  随时获取网络的输入 输出 权重 梯度
+   * 是debug非常需要的东西，所以这里还是给了一个指针，保存每层的输入
    * */
-  // float *input;
+  float *input;
   float *output;
   int input_size;
   int output_size;
@@ -52,7 +56,8 @@ struct Layer {
   int group_size;
 
   // 计算相关
-  float *delta; // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数 dL/dx ,导数 = delta[i] * output[i]
+  float *delta; // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数 dL/dx ,导数 = delta[i] *
+                // output[i]
   float *weights;
   float *weight_grads; // 权重更新值，反向传播的导数
   float *biases;
@@ -70,7 +75,7 @@ struct Layer {
   float *rolling_mean;
   float *rolling_variance;
   float rolling_momentum;
-  float *output_normed;                  // 存储一下norm前后的输出值
+  float *output_normed; // 存储一下norm前后的输出值
   float *output_before_norm;
 
   // softmax 相关
@@ -87,11 +92,20 @@ struct Layer {
   void (*forward)(struct Layer *, struct NetWork *);
   void (*backward)(struct Layer *, struct NetWork *);
   void (*update)(struct Layer *, struct NetWork *);
+  void (*print_weight)(struct Layer *);
+  void (*print_input)(struct Layer *, int);
+  void (*print_output)(struct Layer *, int);
+  void (*print_grad)(struct Layer *);
+  void (*print_delta)(struct Layer *, int);
 };
-
-
 
 void UpdateLayer(Layer *layer, NetWork *network);
 void FreeLayer(Layer *layer);
+void PrintWeight(Layer *layer);
+void PrintInput(Layer *layer, int batch_num);
+void PrintOutput(Layer *layer, int batch_num);
+void PrintGrad(Layer *layer);
+void PrintDelta(Layer *layer, int batch_num);
+char *GetLayerTypeStr(LayerType layer_type);
 
 #endif

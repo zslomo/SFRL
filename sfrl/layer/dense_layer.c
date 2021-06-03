@@ -1,13 +1,15 @@
-#include "dense_layer.h"
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/utils/blas.h"
-#include "base_layer.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "dense_layer.h"
+#include "base_layer.h"
+#include "../activation/activation.h"
+#include "../optimizer/optimizer.h"
+#include "../utils/blas.h"
+
 
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
                           InitType init_type) {
@@ -18,9 +20,10 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.output_size = output_size;
   layer.acti_type = acti_type;
 
-  layer.output = calloc(input_size * batch_size, sizeof(float));
+  layer.output = calloc(output_size * batch_size, sizeof(float));
+  layer.input = calloc(input_size * batch_size, sizeof(float));
   // w, b, delta
-  layer.delta = calloc(input_size * batch_size, sizeof(float));
+  layer.delta = calloc(output_size * batch_size, sizeof(float));
   layer.weights = calloc(output_size * input_size, sizeof(float));
   layer.biases = calloc(output_size, sizeof(float));
   layer.weight_grads = calloc(input_size * output_size, sizeof(float));
@@ -30,6 +33,11 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.forward = ForwardDenseLayer;
   layer.backward = BackwardDenseLayer;
   layer.update = UpdateDenseLayer;
+  layer.print_input = PrintInput;
+  layer.print_output = PrintOutput;
+  layer.print_weight = PrintWeight;
+  layer.print_grad = PrintGrad;
+  layer.print_delta = PrintDelta;
 
   return layer;
 }
@@ -37,8 +45,7 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
 void UpdateDenseLayer(DenseLayer *layer, NetWork *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, NetWork *net) {
-  // 最终输出的是一个flat后的一维tensor 大小是output_size * batch_size
-
+  memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
   int output_tensor_size = layer->output_size * layer->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
 
@@ -103,7 +110,6 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
   int TransB = 0;
   Gemm(TransA, TransB, layer->output_size, layer->input_size, layer->batch_size, 1, 1, layer->delta,
        layer->output_size, net->input, layer->input_size, layer->weight_grads, layer->input_size);
-
   /**
    *  计算 后一层的delta，即net->delta
    *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
@@ -119,4 +125,5 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
          layer->delta, layer->output_size, layer->weights, layer->input_size, net->delta,
          layer->input_size);
   }
+  
 }

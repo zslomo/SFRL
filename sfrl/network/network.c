@@ -1,16 +1,17 @@
-#include "network.h"
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/data/data.h"
-#include "../../sfrl/layer/base_layer.h"
-#include "../../sfrl/layer/batchnorm_layer.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/utils/blas.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "network.h"
+#include "../activation/activation.h"
+#include "../data/data.h"
+#include "../layer/base_layer.h"
+#include "../loss/loss.h"
+#include "../layer/batchnorm_layer.h"
+#include "../optimizer/optimizer.h"
+#include "../utils/blas.h"
 
 void FreeNetwork(NetWork *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
@@ -45,72 +46,6 @@ NetWork MakeNetwork(int n) {
   return net;
 }
 
-char *GetLayerTypeStr(LayerType layer_type) {
-  char *layer_type_str;
-  if (layer_type == DENSE) {
-    layer_type_str = "Dense";
-  } else if (layer_type == BATCHNORMALIZATION) {
-    layer_type_str = "BatchNorm";
-  } else if (layer_type == SOFTMAX) {
-    layer_type_str = "SoftMax";
-  } else if (layer_type == DROPOUT) {
-    layer_type_str = "DropOut";
-  } else if (layer_type == ACTIVATION) {
-    layer_type_str = "Activation";
-  } else if (layer_type == LOSS) {
-    layer_type_str = "Loss";
-  } else {
-    layer_type_str = "error";
-  }
-  return layer_type_str;
-}
-
-char *GetActivationTypeStr(ActiType acti_type) {
-  char *acti_type_str;
-  if (acti_type == LINEAR) {
-    acti_type_str = "linear";
-  } else if (acti_type == SIGMOID) {
-    acti_type_str = "sigmoid";
-  } else if (acti_type == RELU) {
-    acti_type_str = "relu";
-  } else if (acti_type == TANH) {
-    acti_type_str = "tanh";
-  } else {
-    acti_type_str = "error";
-  }
-  return acti_type_str;
-}
-
-char *GetLossStr(LossType loss_type) {
-  char *loss_str;
-  if (loss_type == MSE) {
-    loss_str = "MeanSquareError";
-  } else if (loss_type == CE) {
-    loss_str = "CrossEntropy";
-  } else if (loss_type == CEW) {
-    loss_str = "CrossEntropyWeight";
-  } else {
-    loss_str = "error";
-  }
-  return loss_str;
-}
-
-char *GetOptimizerStr(OptType opt_type) {
-  char *opt_str;
-  if (opt_type == ADAM) {
-    opt_str = "adam";
-  } else if (opt_type == SGD) {
-    opt_str = "sgd";
-  } else if (opt_type == ADAGRAD) {
-    opt_str = "adagrad";
-  } else if (opt_type == RMSPROP) {
-    opt_str = "rmsprop";
-  } else {
-    opt_str = "error";
-  }
-  return opt_str;
-}
-
 void PrintNetWork(NetWork net) {
   printf("net work args:\n");
   printf("batch size: %d\n", net.batch_size);
@@ -143,21 +78,14 @@ float Train(NetWork *net, Data *data, OptType opt_type) {
   net->opt_type = opt_type;
   float sum = 0;
   PrintNetWork(*net);
-  
   net->input_size = batch_size * data->sample_size;
   net->origin_input = malloc(net->input_size * sizeof(float));
   net->ground_truth = malloc(batch_size * sizeof(float));
-  
+  // PrintData(data);
   for (int i = 0; i < batch_num - 1; ++i) {
+    printf("batch %d start...\n", i);
     // 拿到一个batch的数据
     GetNextBatchData(data, net, batch_size, batch_size * i);
-    printf("batch %d start...\n", i);
-    for (int j = 0; j < batch_size; ++j) {
-      for (int k = 0; k < data->sample_size; ++k) {
-        printf("%d,", net->input[j * k + k]);
-      }
-      printf("%f\n", net->ground_truth[j]);
-    }
     printf("batch %d get data done.\n", i);
     net->batch_trained_cnt += batch_size;
     ForwardNetwork(net);
@@ -231,7 +159,7 @@ void ForwardNetwork(NetWork *net) {
   }
   printf("loss: ");
   for (int i = 0; i < net->batch_size; ++i) {
-    printf("%f,", net->input[i]);
+    printf("%0.8f,", net->input[i]);
   }
   printf("\n");
 }
@@ -247,19 +175,22 @@ void ForwardNetwork(NetWork *net) {
 void BackWardNetwork(NetWork *net) {
   for (int i = net->layer_depth - 1; i >= 0; --i) {
     Layer *layer = net->layers[i];
-    if (i != 0) {
-      Layer *pre_layer = net->layers[i - 1];
-      net->input = pre_layer->output;
-      net->delta = pre_layer->delta;
-      float *tmp = calloc(32, sizeof(float));
-    } else {
-      // 第一层，输入就是网络的输入
-      net->input = net->origin_input;
-    }
+    Layer *pre_layer = net->layers[i - 1];
+    net->input = pre_layer->output;
+    net->delta = pre_layer->delta;
+    float *tmp = calloc(32, sizeof(float));
+
     net->active_layer_index = i;
     layer->backward(layer, net);
+    if (layer->print_delta) {
+      printf("now layer is %d\n", i);
+      layer->print_delta(layer, 8);
+    }
   }
+  net->input = net->origin_input;
 }
+
+
 /**
  *  通过不同的optimization方法更新网络参数
  *  没啥可说的

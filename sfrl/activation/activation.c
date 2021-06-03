@@ -53,3 +53,19 @@ void GradientTensor(const float *TensorX, const int size, const ActiType acti_ty
     delta[i] *= Gradient(TensorX[i], acti_type);
   }
 }
+
+char *GetActivationTypeStr(ActiType acti_type) {
+  char *acti_type_str;
+  if (acti_type == LINEAR) {
+    acti_type_str = "linear";
+  } else if (acti_type == SIGMOID) {
+    acti_type_str = "sigmoid";
+  } else if (acti_type == RELU) {
+    acti_type_str = "relu";
+  } else if (acti_type == TANH) {
+    acti_type_str = "tanh";
+  } else {
+    acti_type_str = "error";
+  }
+  return acti_type_str;
+}

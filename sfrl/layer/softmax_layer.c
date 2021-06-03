@@ -3,9 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "../../sfrl/loss/loss.h"
-#include "../../sfrl/utils/blas.h"
+#include <string.h>
+#include "../loss/loss.h"
+#include "../utils/blas.h"
 #include "softmax_layer.h"
 
 SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
@@ -15,28 +15,38 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   layer.input_size = input_size; // softmax_layer的输入输出元素相同 其实就是类别个数
   layer.output_size = input_size;
 
+  layer.input = calloc(input_size * batch_size, sizeof(float));
   layer.output = calloc(input_size * batch_size, sizeof(float));
   layer.delta = calloc(input_size * batch_size, sizeof(float));
   layer.temperature = 1.0;
   layer.forward = ForwardSoftmaxLayer;
   layer.backward = BackwardSoftmaxLayer;
+  layer.print_input = PrintInput;
+  layer.print_output = PrintOutput;
+  layer.print_delta = PrintDelta;
 
   return layer;
 }
 
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
+  memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
   SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->temperature, layer->output);
-  printf("softmax output: ");
+  // printf("softmax output: \n");
   // for (int i = 0; i < net->batch_size * layer->input_size; ++i) {
   //   printf("%f ", layer->output[i]);
   // }
   // printf("\b\n");
 }
 
+/**
+ * softmax 的反向传播函数
+ * 这里就简单多了，CE的loss就是SoftMax + CE形式下的，相当于在CE里已经算好啦
+ * 所以这里的倒数就是上一步的，
+ * */
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
-  BackwardSoftmax(layer->delta, layer->input_size, layer->batch_size, net->delta);
+  memcpy(net->delta, layer->delta, net->batch_size * layer->input_size * sizeof(float));
 }
 
 /**
@@ -80,15 +90,4 @@ void SoftmaxCore(float *input, int n, float temp, float *output) {
   }
 }
 
-/**
- * softmax 的反向传播函数
- * 这里就简单多了，CE的loss就是SoftMax + CE形式下的，相当于在CE里已经算好啦
- * 所以这里的倒数就是上一步的，
- * */
 
-void BackwardSoftmax(float *layer_delta, int n, int batch_size, float *net_delta) {
-  int offset;
-  for (int i = 0; i < batch_size * n; ++i) {
-    net_delta[i] = layer_delta[i];
-  }
-}

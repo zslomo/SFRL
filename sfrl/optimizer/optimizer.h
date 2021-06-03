@@ -20,4 +20,6 @@ void AdamOptimizer(int input_size, int output_size, float *weights,
                    float *weight_grads, float *biases, float *bias_grads, float *grad_cum_w,
                    float *grad_cum_square_w, float *grad_cum_b, float *grad_cum_square_b, float lr,
                    float beta_1, float beta_2);
+char *GetOptimizerStr(OptType opt_type);
+
 #endif

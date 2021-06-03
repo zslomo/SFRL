@@ -1,4 +1,3 @@
-#include "loader.h"
 #include <assert.h>
 #include <float.h>
 #include <limits.h>
@@ -6,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "loader.h"
 
 /**
  *  按行读文件的代码直接copy了darnet的函数

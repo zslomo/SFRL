@@ -1,7 +1,7 @@
 #include "batchnorm_layer.h"
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/utils/blas.h"
+#include "../activation/activation.h"
+#include "../optimizer/optimizer.h"
+#include "../utils/blas.h"
 #include "base_layer.h"
 #include <assert.h>
 #include <float.h>
@@ -10,14 +10,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_size,
-                                  ActiType acti_type, InitType init_type) {
+BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
+                                  InitType init_type) {
   BatchNormLayer layer = {0};
   layer.layer_type = BATCHNORMALIZATION;
   layer.batch_size = batch_size;
   layer.input_size = input_size;
+  int output_size = input_size;
   layer.output_size = output_size;
-
+  
+  layer.input = calloc(input_size, sizeof(float));
+  layer.output = calloc(input_size, sizeof(float));
+  // 这里的delta是上一层传承下来的
+  layer.delta = calloc(input_size * batch_size, sizeof(float));
   /**
    *  bn 层有两个需要学习的参数，γ β，这里 β 其实可以复用bias，但是会造成代码阅读困难
    *  本身beta也没有多少空间占用，就还是给一个单独的参数了
@@ -44,6 +49,9 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
 
   layer.forward = ForwardBatchNormLayer;
   layer.backward = BackwardBatchNormLayer;
+  layer.print_input = PrintInput;
+  layer.print_output = PrintOutput;
+  layer.print_delta = PrintDelta;
 
   return layer;
 }
@@ -51,6 +59,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_siz
 void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
+  memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
   if (net->mode == TRAIN) {
     MeanTensor(layer->output, layer->output_size, layer->batch_size, layer->mean);
     VarianceTensor(layer->output, layer->output_size, layer->batch_size, layer->mean,
@@ -84,37 +93,37 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
                   layer->bn_betas);
 }
 void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
-  if (net->mode == TRAIN) {
-    /**
-     *  求 gamma 和 beta 的梯度
-     **/
-    BnGamaBackward(layer->delta, layer->output_normed, layer->output_size, layer->batch_size,
-                   layer->bn_gamma_grads);
-    BnBetaBackward(layer->delta, layer->output_size, layer->batch_size, layer->bn_beta_grads);
-    /**
-     *  更新delta， 再次说明delta 是对每个加权输入的导数值 dL/dx bn的求导相对复杂，具体公式推导见
-     *  https://zhuanlan.zhihu.com/p/45614576
-     *  简单的结果公式我写在下面了
-     *  1 delta = gamma * delta
-     *  2 delta_mean = mean(delta)
-     *     1 / sqrt(γ*d)
-     *  3 delta_var = variance(delta)
-     *     0.5 * sum(d*(obn-mean)) ^ -1.5
-     *  4 normalize delta
-     *     d = d * 1/(sqrt(v)) + (1 / batch_size) * dm + (2 / batch_size) *dv
-     **/
-    BnDot(layer->bn_gammas, layer->output_size, layer->batch_size, layer->delta);
-    BnMeanDelta(layer->variance, layer->delta, layer->bn_gammas, layer->output_size,
-                layer->batch_size, layer->mean_delta);
-    BnNormDelta(layer->output_before_norm, layer->mean, layer->variance, layer->mean_delta,
-                layer->variance_delta, layer->input_size, layer->batch_size, layer->delta);
-  }
+
+  /**
+   *  求 gamma 和 beta 的梯度
+   **/
+  BnGamaBackward(layer->delta, layer->output_normed, layer->output_size, layer->batch_size,
+                 layer->bn_gamma_grads);
+  BnBetaBackward(layer->delta, layer->output_size, layer->batch_size, layer->bn_beta_grads);
+  /**
+   *  更新delta， 再次说明delta 是对每个加权输入的导数值 dL/dx bn的求导相对复杂，具体公式推导见
+   *  https://zhuanlan.zhihu.com/p/45614576
+   *  简单的结果公式我写在下面了
+   *  1 delta = gamma * delta
+   *  2 delta_mean = mean(delta)
+   *     1 / sqrt(γ*d)
+   *  3 delta_var = variance(delta)
+   *     0.5 * sum(d*(obn-mean)) ^ -1.5
+   *  4 normalize delta
+   *     d = d * 1/(sqrt(v)) + (1 / batch_size) * dm + (2 / batch_size) *dv
+   **/
+  BnDot(layer->bn_gammas, layer->output_size, layer->batch_size, layer->delta);
+  BnMeanDelta(layer->variance, layer->delta, layer->bn_gammas, layer->output_size,
+              layer->batch_size, layer->mean_delta);
+  BnNormDelta(layer->output_before_norm, layer->mean, layer->variance, layer->mean_delta,
+              layer->variance_delta, layer->input_size, layer->batch_size, layer->delta);
+  memcpy(net->delta, layer->delta, layer->output_size * sizeof(float));
 }
 
 void BnGamaBackward(float *delta, float *output_normed, int input_size, int batch_size,
                     float *gamma_grads) {
   for (int i = 0; i < input_size; ++i) {
-    for (int j = 0; j<batch_size; ++j) {
+    for (int j = 0; j < batch_size; ++j) {
       gamma_grads[i] += delta[i + input_size * j] * output_normed[i + input_size * j];
     }
   }
@@ -122,7 +131,7 @@ void BnGamaBackward(float *delta, float *output_normed, int input_size, int batc
 
 void BnBetaBackward(float *delta, int input_size, int batch_size, float *beta_grads) {
   for (int i = 0; i < input_size; ++i) {
-    for (int j = 0; j<batch_size; ++j) {
+    for (int j = 0; j < batch_size; ++j) {
       beta_grads[i] += delta[i + input_size * j];
     }
   }

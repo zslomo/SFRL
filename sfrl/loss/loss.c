@@ -1,6 +1,6 @@
 
 #include "loss.h"
-#include "../../sfrl/utils/blas.h"
+#include "../utils/blas.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
@@ -32,8 +32,9 @@ void CrossEntropy(int batch_size, int class_num, float *pred, float *truth, floa
     for (int j = 0; j < class_num; ++j) {
       // weight_ce 是强化学习的特殊形式，强化学习没有监督信号，
       // truth并不是一个类别标签 而是权重
-      int t = weight_ce ? truth[i] : (int)truth[i] & j;
-      error[i] += -t * log(pred[j * i + j]);
+      int t = weight_ce ? truth[i] : (int)truth[i] ^ j;
+      error[i] += -t * log(pred[class_num * i + j]);
+      // printf("i = %d, j = %d, t = %d, pred = %0.16f, log = %f error = %f \n",i, j, t, pred[class_num * i + j], log(pred[j * i + j]), error[i]);
     }
   }
 }
@@ -49,4 +50,18 @@ void BackwardCrossEntropy(int batch_size, int class_num, float *pred, float *tru
       delta[i] = t - pred[j * i + j];
     }
   }
+}
+
+char *GetLossStr(LossType loss_type) {
+  char *loss_str;
+  if (loss_type == MSE) {
+    loss_str = "MeanSquareError";
+  } else if (loss_type == CE) {
+    loss_str = "CrossEntropy";
+  } else if (loss_type == CEW) {
+    loss_str = "CrossEntropyWeight";
+  } else {
+    loss_str = "error";
+  }
+  return loss_str;
 }

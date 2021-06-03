@@ -1,5 +1,5 @@
 #include "optimizer.h"
-#include "../../sfrl/utils/blas.h"
+#include "../utils/blas.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
@@ -195,4 +195,20 @@ void AdamOptimizer(int input_size, int output_size, float *weights, float *weigh
   DivTensor(w_size, eps, 1, v_hat_w, v_hat_w);
   DotTensor(w_size, m_hat_w, v_hat_w);
   AxpyTensor(w_size, -lr, v_hat_w, weights);
+}
+
+char *GetOptimizerStr(OptType opt_type) {
+  char *opt_str;
+  if (opt_type == ADAM) {
+    opt_str = "adam";
+  } else if (opt_type == SGD) {
+    opt_str = "sgd";
+  } else if (opt_type == ADAGRAD) {
+    opt_str = "adagrad";
+  } else if (opt_type == RMSPROP) {
+    opt_str = "rmsprop";
+  } else {
+    opt_str = "error";
+  }
+  return opt_str;
 }

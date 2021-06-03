@@ -1,7 +1,8 @@
-#include <stdlib.h>
 #include "base_layer.h"
-#include "../../sfrl/optimizer/optimizer.h"
-#include "../../sfrl/network/network.h"
+#include "../network/network.h"
+#include "../optimizer/optimizer.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void UpdateLayer(Layer *layer, NetWork *net) {
   int input_size = layer->input_size;
@@ -109,4 +110,107 @@ void FreeLayer(Layer *layer) {
   if (layer->update) {
     free(layer->update);
   }
+}
+
+void PrintWeight(Layer *layer) {
+  int n = layer->input_size;
+  int m = layer->output_size;
+  int batch_size = layer->batch_size;
+
+  printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
+  printf("bias:\n");
+  for (int i = 0; i < m; ++i) {
+    printf("%f ", layer->biases[i]);
+  }
+  printf("\n");
+  printf("weight :\n");
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      printf("%f ", layer->weights[n * i + j]);
+    }
+    printf("\n");
+  }
+}
+
+void PrintInput(Layer *layer, int batch_num) {
+  int n = layer->input_size;
+  int batch_size = layer->batch_size;
+  batch_num = batch_num > batch_size ? batch_size : batch_num;
+  printf("layer %s input size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  printf("inputs:\n");
+
+  for (int i = 0; i < batch_num; ++i) {
+    for (int j = 0; j < n; ++j) {
+      printf("%f ", layer->input[n * i + j]);
+    }
+    printf("\n");
+  }
+}
+
+void PrintOutput(Layer *layer, int batch_num) {
+  int n = layer->output_size;
+  int batch_size = layer->batch_size;
+  batch_num = batch_num > batch_size ? batch_size : batch_num;
+  printf("layer %s output size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  printf("outputs:\n");
+
+  for (int i = 0; i < batch_num; ++i) {
+    for (int j = 0; j < n; ++j) {
+      printf("%f ", layer->output[n * i + j]);
+    }
+    printf("\n");
+  }
+}
+
+void PrintGrad(Layer *layer) {
+  int n = layer->input_size;
+  int m = layer->output_size;
+  printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
+  printf("bias grad:\n");
+  for (int i = 0; i < m; ++i) {
+    printf("%f ", layer->bias_grads[i]);
+  }
+  printf("\n");
+  printf("weight grad:\n");
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      printf("%f ", layer->weight_grads[n * i + j]);
+    }
+    printf("\n");
+  }
+}
+
+void PrintDelta(Layer *layer, int batch_num) {
+  int n = layer->input_size;
+  int batch_size = layer->batch_size;
+  batch_num = batch_num > batch_size ? batch_size : batch_num;
+  printf("layer %s delta size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  printf("delta:\n");
+
+  for (int i = 0; i < batch_num; ++i) {
+    for (int j = 0; j < n; ++j) {
+      printf("%f ", layer->delta[n * i + j]);
+    }
+    printf("\n");
+  }
+}
+
+char *GetLayerTypeStr(LayerType layer_type) {
+  char *layer_type_str;
+  if (layer_type == DENSE) {
+    layer_type_str = "Dense";
+  } else if (layer_type == BATCHNORMALIZATION) {
+    layer_type_str = "BatchNorm";
+  } else if (layer_type == SOFTMAX) {
+    layer_type_str = "SoftMax";
+  } else if (layer_type == DROPOUT) {
+    layer_type_str = "DropOut";
+  } else if (layer_type == ACTIVATION) {
+    layer_type_str = "Activation";
+  } else if (layer_type == LOSS) {
+    layer_type_str = "Loss";
+  } else {
+    layer_type_str = "error";
+  }
+  return layer_type_str;
 }

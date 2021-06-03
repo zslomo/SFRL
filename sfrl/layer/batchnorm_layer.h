@@ -1,9 +1,9 @@
 #ifndef BATCHNORM_LAYER_H
 #define BATCHNORM_LAYER_H
+#include "../activation/activation.h"
+#include "../network/network.h"
+#include "../utils/init.h"
 #include "base_layer.h"
-#include "../../sfrl/activation/activation.h"
-#include "../../sfrl/network/network.h"
-#include "../../sfrl/utils/init.h"
 
 /**
  *  BN
@@ -13,8 +13,8 @@
  * */
 typedef Layer BatchNormLayer;
 
-BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, int output_size,
-                                  ActiType acti_type, InitType init_type);
+BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
+                                  InitType init_type);
 void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net);
 void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net);
 

@@ -19,4 +19,6 @@ static float ReluGradient(float x);
 static float TanhActivate(float x);
 static float TanhGradient(float x);
 
+char *GetActivationTypeStr(ActiType acti_type);
+
 #endif
