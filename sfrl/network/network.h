@@ -9,7 +9,7 @@
 
 typedef enum { TRAIN, TEST } NetMode;
 
-struct NetWork {
+struct Network {
   Layer **layers;
   NetMode mode;
   int layer_depth;
@@ -43,23 +43,21 @@ struct NetWork {
   float beta_1;
   float beta_2;
   float eps;
-  float *grad_cum_w; // 一些优化方法中的一阶梯度累计量
-  float *grad_cum_b;
-  float *grad_cum_square_w; // 一些优化方法中的二阶梯度累计量
-  float *grad_cum_square_b;
 
-  float (*train)(struct NetWork *net, struct Data *data, OptType);
-  float (*test)(struct NetWork *net, struct Data *data);
+  float (*train)(struct Network *, struct Data *, OptType, int);
+  float (*test)(struct Network *, struct Data *);
+  void (*reset)(struct Network *);
 };
 
-NetWork MakeNetwork(int n);
-void FreeNetwork(NetWork *net);
-void ForwardNetwork(NetWork *net);
-void BackWardNetwork(NetWork *net);
-void UpdateNetwork(NetWork *net);
-void GetNextBatchData(Data *data, NetWork *net, int sample_num, int offset);
-float Train(NetWork *net, Data *data, OptType opt_type);
-float Test(NetWork *net, Data *data);
-void PrintNetWork(NetWork net);
+Network MakeNetwork(int n);
+void FreeNetwork(Network *net);
+void ForwardNetwork(Network *net);
+void BackWardNetwork(Network *net);
+void UpdateNetwork(Network *net);
+void GetNextBatchData(Data *data, Network *net, int sample_num, int offset);
+float Train(Network *net, Data *data, OptType opt_type, int epoches);
+float Test(Network *net, Data *data);
+void PrintNetwork(Network net);
+void ResetNetwork(Network *net);
 
 #endif

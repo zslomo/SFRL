@@ -7,11 +7,11 @@
 #include <stdlib.h>
 
 // MSE 这里不求和
-void MeanSquareError(int n, float *pred, float *truth, float *error) {
+void MeanSquareError(int n, float *pred, float *truth, float *loss) {
   assert(n > 0);
   for (int i = 0; i < n; ++i) {
     float diff = truth[i] - pred[i];
-    error[i] = diff * diff / n;
+    loss[i] = diff * diff / n;
   }
 }
 
@@ -24,7 +24,7 @@ void BackwardMeanSquareError(int n, float *pred, float *truth, float *delta) {
   }
 }
 
-void CrossEntropy(int batch_size, int class_num, float *pred, float *truth, float *error,
+void CrossEntropy(int batch_size, int class_num, float *pred, float *truth, float *loss,
                   int weight_ce) {
   assert(pred);
   assert(truth);
@@ -33,10 +33,13 @@ void CrossEntropy(int batch_size, int class_num, float *pred, float *truth, floa
       // weight_ce 是强化学习的特殊形式，强化学习没有监督信号，
       // truth并不是一个类别标签 而是权重
       int t = weight_ce ? truth[i] : (int)truth[i] ^ j;
-      error[i] += -t * log(pred[class_num * i + j]);
-      // printf("i = %d, j = %d, t = %d, pred = %0.16f, log = %f error = %f \n",i, j, t, pred[class_num * i + j], log(pred[j * i + j]), error[i]);
+      loss[i] -= t * log(pred[class_num * i + j]);
+      // if (loss[i] > 100 || loss[i] < -100) {
+      //   printf("loss: %f,pred : %f ",loss[i], pred[class_num * i + j]);
+      // }
     }
   }
+  // printf("\n");
 }
 
 void BackwardCrossEntropy(int batch_size, int class_num, float *pred, float *truth, float *delta,
@@ -47,7 +50,7 @@ void BackwardCrossEntropy(int batch_size, int class_num, float *pred, float *tru
   for (int i = 0; i < batch_size; ++i) {
     for (int j = 0; j < class_num; ++j) {
       int t = weight_ce ? truth[i] : (int)truth[i] & j;
-      delta[i] = t - pred[j * i + j];
+      delta[class_num * i + j] = t - pred[class_num * i + j];
     }
   }
 }
@@ -61,7 +64,7 @@ char *GetLossStr(LossType loss_type) {
   } else if (loss_type == CEW) {
     loss_str = "CrossEntropyWeight";
   } else {
-    loss_str = "error";
+    loss_str = "loss";
   }
   return loss_str;
 }

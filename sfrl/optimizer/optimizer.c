@@ -45,7 +45,7 @@ void AdaGradOptimizer(int input_size, int output_size, float *weights, float *we
   int w_size = input_size * output_size;
   int b_size = output_size;
 
-  float eps = 1e-7;
+  float eps = 1e-4;
 
   // 梯度累计量计算
   // r = r + g*g
@@ -82,30 +82,52 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
                       float *grad_cum_square_b, float lr, float decay) {
   int w_size = input_size * output_size;
   int b_size = output_size;
-  float eps = 1e-7;
+  /**
+   *  Rmsprop 中存在一个1/r 的对梯度的衰减，r是累计平方梯度，当激活函数是relu的时候
+   *  梯读会出现大量的0(输入为负梯度就是0) 那么 1/r 就会爆炸，所以这里eps不宜设置过大
+   *  否则 衰减系数太大，不容易收敛
+   * */
+  float eps = 1e-4;
 
   assert(grad_cum_square_b);
   assert(grad_cum_square_w);
 
   // Rt = ρ*Rt-1 + (1-ρ)*g*g
   float *grad_tmp_b = calloc(b_size, sizeof(float));
+  // g*g
   SquareTensor(b_size, bias_grads, grad_tmp_b);
+  // (1-ρ)*g*g
   ScalTensor(b_size, 1 - decay, grad_tmp_b);
+  // ρ*Rt-1
   ScalTensor(b_size, decay, grad_cum_square_b);
+  // ρ*Rt-1 + (1-ρ)*g*g
   AxpyTensor(b_size, 1, grad_tmp_b, grad_cum_square_b);
+  free(grad_tmp_b);
   float *grad_tmp_w = calloc(w_size, sizeof(float));
+  // g*g
   SquareTensor(w_size, weight_grads, grad_tmp_w);
+  // (1-ρ)*g*g
   ScalTensor(w_size, 1 - decay, grad_tmp_w);
+  // ρ*Rt-1
   ScalTensor(w_size, decay, grad_cum_square_w);
+  // ρ*Rt-1 + (1-ρ)*g*g
   AxpyTensor(w_size, 1, grad_tmp_w, grad_cum_square_w);
   free(grad_tmp_w);
-
+  // printf("bias_grads is :\n");
+  // for (int i = 0; i < b_size; ++i) {
+  //   printf("%0.8f ", bias_grads[i]);
+  // }
+  // printf("\n");
   // bias
   // b = b - lr * 1 / sqrt(r + eps)
   float *increment_tmp_b = calloc(b_size, sizeof(float));
+  // r + eps
   AxpyTensor(b_size, eps, grad_cum_square_b, increment_tmp_b);
+  // sqrt(r + eps)
   SqrtTensor(b_size, increment_tmp_b, increment_tmp_b);
-  DivTensor(b_size, 0, 1, increment_tmp_b, increment_tmp_b);
+  // 1 / sqrt(r + eps)
+  DivTensor(b_size, eps, 1, increment_tmp_b, increment_tmp_b);
+  // b - lr * 1 / sqrt(r + eps)
   AxpyTensor(b_size, -lr, increment_tmp_b, biases);
   free(increment_tmp_b);
 
@@ -113,7 +135,7 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   float *increment_tmp_w = calloc(w_size, sizeof(float));
   AxpyTensor(w_size, eps, grad_cum_square_w, increment_tmp_w);
   SqrtTensor(w_size, increment_tmp_w, increment_tmp_w);
-  DivTensor(w_size, 0, 1, increment_tmp_w, increment_tmp_w);
+  DivTensor(w_size, eps, 1, increment_tmp_w, increment_tmp_w);
   AxpyTensor(w_size, -lr, increment_tmp_w, weights);
   free(increment_tmp_w);
   // printf("grad_cum_square_b[0] = %f\n", grad_cum_square_b[0]);
@@ -131,7 +153,7 @@ void AdamOptimizer(int input_size, int output_size, float *weights, float *weigh
   float *v_hat_b = calloc(b_size, sizeof(float));
   float *v_hat_w = calloc(b_size, sizeof(float));
 
-  float eps = 1e-7;
+  float eps = 1e-4;
 
   /**
    *  bias 的Mt Vt更新计算
@@ -156,7 +178,7 @@ void AdamOptimizer(int input_size, int output_size, float *weights, float *weigh
   AxpyTensor(b_size, 1, grad_tmp_b, grad_cum_square_b);
   // V_hat = Vt / (1 - β2)
   ScalTensor(b_size, 1 / (1 - beta_2), v_hat_b);
-
+  free(grad_tmp_b);
   /**
    *  weight 的Mt Vt更新计算
    *  Mt = Mt-1 + (1 - β1) * g

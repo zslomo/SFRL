@@ -26,11 +26,12 @@ LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type) {
   layer.print_input = PrintInput;
   layer.print_output = PrintOutput;
   layer.print_delta = PrintDelta;
+  layer.reset = ResetLayer;
 
   return layer;
 }
 
-void ForwardLossLayer(LossLayer *layer, NetWork *net) {
+void ForwardLossLayer(LossLayer *layer, Network *net) {
   assert(net->ground_truth);
   int n = net->batch_size * layer->input_size;
   // loss层是最后一层，在forward的时候记录一下整个网络的输出，用来计算metric
@@ -57,9 +58,16 @@ void ForwardLossLayer(LossLayer *layer, NetWork *net) {
   default:
     break;
   }
+  printf("loss: ");
+  for (int i = 0; i < net->batch_size; ++i) {
+    printf("%0.8f,", layer->output[i]);
+    net->loss += layer->output[i];
+  }
+  net->loss /= net->batch_size;
+  printf("\n");
 }
 
-void BackwardLossLayer(LossLayer *layer, NetWork *net) {
+void BackwardLossLayer(LossLayer *layer, Network *net) {
   assert(net->ground_truth);
   int n = net->batch_size * layer->input_size;
   switch (layer->loss_type) {

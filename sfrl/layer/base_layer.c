@@ -1,10 +1,11 @@
-#include "base_layer.h"
-#include "../network/network.h"
-#include "../optimizer/optimizer.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "base_layer.h"
+#include "../network/network.h"
+#include "../utils/blas.h"
+#include "../optimizer/optimizer.h"
 
-void UpdateLayer(Layer *layer, NetWork *net) {
+void UpdateLayer(Layer *layer, Network *net) {
   int input_size = layer->input_size;
   int output_size = layer->output_size;
   int batch_size = net->batch_size;
@@ -14,14 +15,23 @@ void UpdateLayer(Layer *layer, NetWork *net) {
   float *weight_grads = layer->weight_grads;
   float *biases = layer->biases;
   float *bias_grads = layer->bias_grads;
-  net->grad_cum_w = calloc(w_size, sizeof(float));
-  float *grad_cum_w = net->grad_cum_w;
-  net->grad_cum_b = calloc(b_size, sizeof(float));
-  float *grad_cum_b = net->grad_cum_b;
-  net->grad_cum_square_w = calloc(w_size, sizeof(float));
-  float *grad_cum_square_w = net->grad_cum_square_w;
-  net->grad_cum_square_b = calloc(b_size, sizeof(float));
-  float *grad_cum_square_b = net->grad_cum_square_b;
+  if(!layer->grad_cum_w){
+    layer->grad_cum_w = calloc(w_size, sizeof(float));
+  }
+  float *grad_cum_w = layer->grad_cum_w;
+  if(!layer->grad_cum_b){
+    layer->grad_cum_b = calloc(b_size, sizeof(float));
+  }
+  float *grad_cum_b = layer->grad_cum_b;
+  if(!layer->grad_cum_square_w){
+    layer->grad_cum_square_w = calloc(w_size, sizeof(float));
+  }
+  float *grad_cum_square_w = layer->grad_cum_square_w;
+  if(!layer->grad_cum_square_b){
+    layer->grad_cum_square_b = calloc(b_size, sizeof(float));
+  }
+  float *grad_cum_square_b = layer->grad_cum_square_b;
+  
   float lr = net->learning_rate;
   float beta_1 = net->beta_1;
   float beta_2 = net->beta_2;
@@ -112,6 +122,36 @@ void FreeLayer(Layer *layer) {
   }
 }
 
+void ResetLayer(Layer *layer) {
+  if (layer->input) {
+    InitTensor(layer->input_size, 0, layer->input);
+  }
+  if (layer->output) {
+    InitTensor(layer->output_size, 0, layer->output);
+  }
+  if (layer->delta) {
+    InitTensor(layer->output_size * layer->batch_size, 0, layer->delta);
+  }
+  if (layer->weight_grads) {
+    InitTensor(layer->output_size * layer->input_size, 0, layer->output);
+  }
+  if (layer->bias_grads) {
+    InitTensor(layer->output_size, 0, layer->output);
+  }
+  if (layer->bn_gamma_grads) {
+    InitTensor(layer->output_size, 0, layer->bn_gamma_grads);
+  }
+  if (layer->bn_beta_grads) {
+    InitTensor(layer->output_size, 0, layer->bn_beta_grads);
+  }
+  if (layer->output_normed) {
+    InitTensor(layer->output_size, 0, layer->output_normed);
+  }
+  if (layer->output_before_norm) {
+    InitTensor(layer->output_size, 0, layer->output_before_norm);
+  }
+}
+
 void PrintWeight(Layer *layer) {
   int n = layer->input_size;
   int m = layer->output_size;
@@ -130,6 +170,7 @@ void PrintWeight(Layer *layer) {
     }
     printf("\n");
   }
+  printf("\n");
 }
 
 void PrintInput(Layer *layer, int batch_num) {
@@ -181,7 +222,7 @@ void PrintGrad(Layer *layer) {
 }
 
 void PrintDelta(Layer *layer, int batch_num) {
-  int n = layer->input_size;
+  int n = layer->output_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
   printf("layer %s delta size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);

@@ -8,8 +8,8 @@
 struct Layer;
 typedef struct Layer Layer;
 
-struct NetWork;
-typedef struct NetWork NetWork;
+struct Network;
+typedef struct Network Network;
 
 /**
  * 网络结构类型，强化学习没有太复杂的结构,这里主要是全连接、卷积(类似棋盘游戏需要)
@@ -56,8 +56,11 @@ struct Layer {
   int group_size;
 
   // 计算相关
-  float *delta; // 误差函数关于当前层每个加权输入的导数值 用来求权重的导数 dL/dx ,导数 = delta[i] *
-                // output[i]
+  /**
+   *  delta 是实现链式法则的核心，代表误差函数关于当前层每个加权输入的导数值
+   *  用来求权重的导数 dL/dx = dL/ddelta[i] *output[i]
+   * */
+  float *delta;    
   float *weights;
   float *weight_grads; // 权重更新值，反向传播的导数
   float *biases;
@@ -85,21 +88,33 @@ struct Layer {
   float probability;
   float *drop_elem;
 
+  // optimizer 相关
+  float *grad_cum_w; // 一些优化方法中的一阶梯度累计量
+  float *grad_cum_b;
+  float *grad_cum_square_w; // 一些优化方法中的二阶梯度累计量
+  float *grad_cum_square_b;
+
   /**
    *  非常重要的三个函数，分别定义了这种类型网络的前向、后向、更新操作
    *  这里要注意，只有struct中的指针成员变量可以被改变，其他的成员变量都只能局部生效
    **/
-  void (*forward)(struct Layer *, struct NetWork *);
-  void (*backward)(struct Layer *, struct NetWork *);
-  void (*update)(struct Layer *, struct NetWork *);
+  void (*forward)(struct Layer *, struct Network *);
+  /**
+   * 前向计算每个神经元的输出值 a_j j表示网络的第j个神经元
+   * 
+   * 
+   * */
+  void (*backward)(struct Layer *, struct Network *);
+  void (*update)(struct Layer *, struct Network *);
   void (*print_weight)(struct Layer *);
   void (*print_input)(struct Layer *, int);
   void (*print_output)(struct Layer *, int);
   void (*print_grad)(struct Layer *);
   void (*print_delta)(struct Layer *, int);
+  void (*reset)(struct Layer *);
 };
 
-void UpdateLayer(Layer *layer, NetWork *network);
+void UpdateLayer(Layer *layer, Network *network);
 void FreeLayer(Layer *layer);
 void PrintWeight(Layer *layer);
 void PrintInput(Layer *layer, int batch_num);
@@ -107,5 +122,6 @@ void PrintOutput(Layer *layer, int batch_num);
 void PrintGrad(Layer *layer);
 void PrintDelta(Layer *layer, int batch_num);
 char *GetLayerTypeStr(LayerType layer_type);
+void ResetLayer(Layer *layer);
 
 #endif

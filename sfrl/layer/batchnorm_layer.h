@@ -15,8 +15,8 @@ typedef Layer BatchNormLayer;
 
 BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
                                   InitType init_type);
-void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net);
-void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net);
+void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net);
+void BackwardBatchNormLayer(BatchNormLayer *layer, Network *net);
 
 void BnGamaBackward(float *delta, float *output_normed, int input_size, int batch_size,
                     float *gamma_grads);

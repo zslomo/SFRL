@@ -18,7 +18,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_
   layer.input_size = input_size;
   int output_size = input_size;
   layer.output_size = output_size;
-  
+
   layer.input = calloc(input_size, sizeof(float));
   layer.output = calloc(input_size, sizeof(float));
   // 这里的delta是上一层传承下来的
@@ -52,11 +52,12 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_
   layer.print_input = PrintInput;
   layer.print_output = PrintOutput;
   layer.print_delta = PrintDelta;
+  layer.reset = ResetLayer;
 
   return layer;
 }
 
-void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
+void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
   memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
@@ -92,7 +93,7 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
   BatchNormTensor(layer->output, layer->output_size, layer->batch_size, layer->bn_gammas,
                   layer->bn_betas);
 }
-void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
+void BackwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
 
   /**
    *  求 gamma 和 beta 的梯度
@@ -117,7 +118,9 @@ void BackwardBatchNormLayer(BatchNormLayer *layer, NetWork *net) {
               layer->batch_size, layer->mean_delta);
   BnNormDelta(layer->output_before_norm, layer->mean, layer->variance, layer->mean_delta,
               layer->variance_delta, layer->input_size, layer->batch_size, layer->delta);
-  memcpy(net->delta, layer->delta, layer->output_size * sizeof(float));
+  if (net->delta) {
+    memcpy(net->delta, layer->delta, layer->output_size * sizeof(float));
+  }
 }
 
 void BnGamaBackward(float *delta, float *output_normed, int input_size, int batch_size,

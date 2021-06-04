@@ -24,11 +24,12 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
   layer.print_input = PrintInput;
   layer.print_output = PrintOutput;
   layer.print_delta = PrintDelta;
+  layer.reset = ResetLayer;
 
   return layer;
 }
 
-void ForwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
+void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
   memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
   SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->temperature, layer->output);
   // printf("softmax output: \n");
@@ -43,7 +44,7 @@ void ForwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
  * 这里就简单多了，CE的loss就是SoftMax + CE形式下的，相当于在CE里已经算好啦
  * 所以这里的倒数就是上一步的，
  * */
-void BackwardSoftmaxLayer(SoftmaxLayer *layer, NetWork *net) {
+void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
   memcpy(net->delta, layer->delta, net->batch_size * layer->input_size * sizeof(float));

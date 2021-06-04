@@ -66,7 +66,7 @@ int ReadData(char *filename, char **samples) {
   return sample_num + 1;
 }
 
-int BuildNet(Data *data, NetWork *net) {
+int BuildNet(Data *data, Network *net) {
   int batch_size = 16;
   DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 32, RELU, NORMAL);
   DenseLayer dnn_2 = MakeDenseLayer(batch_size, 32, 2, RELU, NORMAL);
@@ -81,7 +81,7 @@ int BuildNet(Data *data, NetWork *net) {
   net->layers[3] = &loss_layer;
   printf("start train...\n");
   net->learning_rate = 0.1;
-  net->train(net, data, RMSPROP);
+  net->train(net, data, RMSPROP, 2);
 }
 int main(int argc, char **argv) {
   printf("Read data...\n");
@@ -89,6 +89,6 @@ int main(int argc, char **argv) {
   int sample_num = ReadData("../data/iris/iris.data", samples);
   printf("get sample done...\n");
   Data data = BuildInput(samples, sample_num);
-  NetWork net = MakeNetwork(4);
+  Network net = MakeNetwork(4);
   BuildNet(&data, &net);
 }

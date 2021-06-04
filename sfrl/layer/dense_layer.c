@@ -10,7 +10,6 @@
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
 
-
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
                           InitType init_type) {
   DenseLayer layer = {0};
@@ -23,7 +22,7 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.output = calloc(output_size * batch_size, sizeof(float));
   layer.input = calloc(input_size * batch_size, sizeof(float));
   // w, b, delta
-  layer.delta = calloc(output_size * batch_size, sizeof(float));
+  layer.delta = calloc(batch_size * output_size, sizeof(float));
   layer.weights = calloc(output_size * input_size, sizeof(float));
   layer.biases = calloc(output_size, sizeof(float));
   layer.weight_grads = calloc(input_size * output_size, sizeof(float));
@@ -38,13 +37,14 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.print_weight = PrintWeight;
   layer.print_grad = PrintGrad;
   layer.print_delta = PrintDelta;
+  layer.reset = ResetLayer;
 
   return layer;
 }
 
-void UpdateDenseLayer(DenseLayer *layer, NetWork *net) { UpdateLayer(layer, net); }
+void UpdateDenseLayer(DenseLayer *layer, Network *net) { UpdateLayer(layer, net); }
 
-void ForwardDenseLayer(DenseLayer *layer, NetWork *net) {
+void ForwardDenseLayer(DenseLayer *layer, Network *net) {
   memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
   int output_tensor_size = layer->output_size * layer->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
@@ -78,15 +78,16 @@ void ForwardDenseLayer(DenseLayer *layer, NetWork *net) {
   ActivateTensor(layer->output, output_tensor_size, layer->acti_type);
 }
 
-void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
+void BackwardDenseLayer(DenseLayer *layer, Network *net) {
   int output_tensor_size = layer->output_size * layer->batch_size;
   /**
    *  计算 delta
-   *  delta = f'(x) * delta_tmp
-   *  delta_tmp 是前一层计算好的 delta_tmp = delta(i+1) × weights
+   *  delta = f'(x) * delta_pre, delta_pre在之前就算好了。
+   *  就是net->delta，上一步会指向这步的layer-delta
+   *  在这里直接乘 激活函数的导数
    **/
   GradientTensor(layer->output, output_tensor_size, layer->acti_type, layer->delta);
-
+  
   /**
    *  计算 bias_grads = delta
    **/
@@ -113,11 +114,16 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
   /**
    *  计算 后一层的delta，即net->delta
    *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
-   *  就可以直接用(f'(x) * delta)->T × input算出来了 注意最后一层的时候是没有后一层的，此时
-   *net->delta == null 不需要计算 net->delta = delta_tmp = delta × weights 维度是 M*K × K*N = M*N A
-   *delta M*K B weights K*N C net->delta M*N M batch_size A的行 N ldb ldc input_size, B的列 K lda
-   *output_size, A的列 B的行 ALPHA 和 BETA这里都是1
+   *  就可以直接用(f'(x) * delta)->T × input算出来了
+   *  net->delta = delta_tmp = delta × weights 维度是 M*K × K*N = M*N
+   *  A delta batch * output
+   *  B weights output * input
+   *  C net->delta batch * input
+   *  M batch_size A的行
+   *  N ldb ldc input_size, B的列
+   *  K lda output_size, A的列 B的行 ALPHA 和 BETA这里都是1
    **/
+  // printf("M:%d, N:%d, K:%d\n", layer->batch_size, layer->input_size, layer->output_size);
   if (net->delta) {
     int TransA = 0;
     int TransB = 0;
@@ -125,5 +131,4 @@ void BackwardDenseLayer(DenseLayer *layer, NetWork *net) {
          layer->delta, layer->output_size, layer->weights, layer->input_size, net->delta,
          layer->input_size);
   }
-  
 }
