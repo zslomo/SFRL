@@ -149,6 +149,12 @@ void AxpyTensor(int size, float ALPHA, float *TensorX, float *TensorY) {
   }
 }
 
+void CopyTensor(int size, float *TensorX, float *TensorY) {
+  for (int i = 0; i < size; ++i) {
+    TensorY[i] = TensorX[i];
+  }
+}
+
 void ScalTensor(int size, float ALPHA, float *TensorX) {
   for (int i = 0; i < size; ++i) {
     TensorX[i] *= ALPHA;

@@ -14,7 +14,7 @@ LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, char
   layer.layer_name = layer_name;
   layer.batch_size = batch_size;
   layer.input_size = input_size;
-  layer.output_size = input_size;
+  layer.output_size = 1;
   layer.loss_type = loss_type;
 
   layer.input = calloc(input_size * batch_size, sizeof(float));
@@ -37,7 +37,7 @@ void ForwardLossLayer(LossLayer *layer, Network *net) {
   int n = net->batch_size * layer->input_size;
   // loss层是最后一层，在forward的时候记录一下整个网络的输出，用来计算metric
   net->output = net->input;
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
   InitTensor(layer->output_size * net->batch_size, 0, layer->output);
   // 计算loss
   switch (layer->loss_type) {

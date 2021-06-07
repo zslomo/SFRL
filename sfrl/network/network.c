@@ -73,20 +73,21 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
     sum = 0;
     net->epoch = i + 1;
     // for (int j = 0; j < batch_num - 1; ++j) {
-      for (int j = 0; j < 3; ++j) {
+    for (int j = 0; j < 3; ++j) {
       net->batch = j;
       // for (int j = 0; j < 5; ++j) {
       // printf("--------------- epoch %d, batch %d start -----------------\n", i, j);
       // 拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
-      // printf("batch %d get data done.\n", j);
+      
+      printf("batch %d get data done.---------------------------------------------------\n", j);
       net->batch_trained_cnt += batch_size;
       ForwardNetwork(net);
-      // printf("batch %d forward done.\n", j);
+      printf("batch %d forward done.-----------------------------------------------------\n", j);
       BackWardNetwork(net);
-      // printf("batch %d backward done.\n", j);
+      printf("batch %d backward done.-----------------------------------------------------\n", j);
       UpdateNetwork(net);
-      // printf("batch %d update done.\n", j);
+      printf("batch %d update done.-------------------------------------------------------\n", j);
       sum += net->loss;
       // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
     }
@@ -152,13 +153,9 @@ void ForwardNetwork(Network *net) {
     net->active_layer_index = i;
     Layer *layer = (net->layers[i]);
     layer->forward(layer, net);
-    if(layer->print_delta)
-    layer->print_delta(layer, net->batch_size);
-    // layer 是没有 input这个成员变量的，当前层的输入就是上一层的输出
-    // 所以没有必要存两份，这里直接让net->input
-    // 指向上一层的输出，当做当前层的输入就好了
     net->input = layer->output;
   }
+  net->input = net->origin_input;
 }
 /**
  *  反向传播部分，维护一个delta来实现链式求导法则，delta是输入的导数
@@ -183,6 +180,18 @@ void BackWardNetwork(Network *net) {
       net->delta = NULL;
     }
     layer->backward(layer, net);
+    
+    if (layer->print_delta) {
+      layer->print_input(layer, net->batch_size);
+      if (layer->print_weight){
+        layer->print_weight(layer);
+        layer->print_grad(layer);
+      }
+        
+      layer->print_output(layer, net->batch_size);
+      layer->print_delta(layer, net->batch_size);
+      
+    }
   }
 }
 

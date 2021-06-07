@@ -68,8 +68,8 @@ int ReadData(char *filename, char **samples) {
 
 int BuildNet(Data *data, Network *net) {
   int batch_size = 4;
-  DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 8, RELU, NORMAL, "dense_1");
-  DenseLayer dnn_2 = MakeDenseLayer(batch_size, 8, 2, RELU, NORMAL, "dense_2");
+  DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 8, TANH, NORMAL, "dense_1");
+  DenseLayer dnn_2 = MakeDenseLayer(batch_size, 8, 2, TANH, NORMAL, "dense_2");
   SoftmaxLayer sm_1 = MakeSoftmaxLayer(batch_size, 2, "softmax");
   LossLayer loss_layer = MakeLossLayer(batch_size, 2, CE, "loss");
 

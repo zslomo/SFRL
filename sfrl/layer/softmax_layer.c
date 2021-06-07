@@ -30,7 +30,7 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size, char *layer_name) 
 }
 
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
   SoftmaxBatch(net->input, layer->input_size, net->batch_size, layer->temperature, layer->output);
 }
 
@@ -42,7 +42,7 @@ void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
-  memcpy(net->delta, layer->delta, net->batch_size * layer->input_size * sizeof(float));
+  AxpyTensor(net->batch_size * layer->input_size, 1, layer->delta, net->delta);
 }
 
 /**
@@ -53,7 +53,7 @@ void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
 void SoftmaxBatch(float *input, int n, int batch_size, float temp, float *output) {
   for (int i = 0; i < batch_size; ++i) {
     int offset = i * n;
-    // printf("input : %f, %f\n", (input + offset)[0], (input + offset)[1]);
+    // printf("input offset: %d, value: %f, %f\n", offset, (input + offset)[0], (input + offset)[1]);
     SoftmaxCore(input + offset, n, temp, output + offset);
   }
 }

@@ -61,7 +61,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_
 void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
   if (net->mode == TRAIN) {
     MeanTensor(layer->output, layer->output_size, net->batch_size, layer->mean);
     VarianceTensor(layer->output, layer->output_size, net->batch_size, layer->mean,

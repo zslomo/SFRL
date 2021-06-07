@@ -46,7 +46,7 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
 void UpdateDenseLayer(DenseLayer *layer, Network *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, Network *net) {
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
   int output_tensor_size = layer->output_size * net->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
 

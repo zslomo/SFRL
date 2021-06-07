@@ -49,5 +49,6 @@ void VarianceTensor(float *TensorX, int input_size, int batch_size, float *mean,
 void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, float *variance);
 void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamma, float *beta);
 void ShuffleArray(void *array, size_t array_size, size_t elem_size);
+void CopyTensor(int size, float *TensorX, float *TensorY);
 
 #endif

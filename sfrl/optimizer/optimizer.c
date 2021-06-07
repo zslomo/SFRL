@@ -14,28 +14,28 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
 
   // bias
   float *grad_tmp_b = calloc(b_size, sizeof(float));
-  memcpy(grad_tmp_b, grad_cum_b, b_size * sizeof(float));
+  CopyTensor(b_size, grad_cum_b, grad_tmp_b);
   // ρVt-1
-  ScalTensor(b_size, momentum, grad_tmp_b);
+  ScalTensor(b_size, 1 - momentum, grad_tmp_b);
   // g + ρVt-1
   AxpyTensor(b_size, 1, bias_grads, grad_tmp_b);
   // b = b - lr * (g + ρVt-1)
   AxpyTensor(b_size, -lr, grad_tmp_b, biases);
   // 动量更新
-  memcpy(grad_cum_b, grad_tmp_b, b_size * sizeof(float));
+  CopyTensor(b_size, grad_tmp_b, grad_cum_b);
   free(grad_tmp_b);
 
   // weight
   float *grad_tmp_w = calloc(w_size, sizeof(float));
-  memcpy(grad_tmp_w, grad_cum_w, w_size * sizeof(float));
+  CopyTensor(w_size, grad_cum_w, grad_tmp_w);
   // ρVt-1
-  ScalTensor(w_size, momentum, grad_tmp_w);
+  ScalTensor(w_size, 1 - momentum, grad_tmp_w);
   // g + ρVt-1
   AxpyTensor(w_size, 1, weight_grads, grad_tmp_w);
   // w = w - lr * (g + ρVt-1)
   AxpyTensor(w_size, -lr, grad_tmp_w, biases);
   // 动量更新
-  memcpy(grad_cum_w, grad_tmp_w, w_size * sizeof(float));
+  CopyTensor(w_size, grad_tmp_w, grad_cum_w);
   free(grad_tmp_w);
 }
 
