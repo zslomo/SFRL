@@ -1,10 +1,4 @@
 #include "network.h"
-#include <assert.h>
-#include <float.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "../activation/activation.h"
 #include "../data/data.h"
 #include "../layer/base_layer.h"
@@ -12,13 +6,19 @@
 #include "../loss/loss.h"
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
+#include <assert.h>
+#include <float.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 Network MakeNetwork(int n) {
   Network net = {0};
   net.layer_depth = n;
   net.layers = calloc(net.layer_depth, sizeof(Layer *));
   // 默认优化参数
-  net.learning_rate = 0.1;
+  net.learning_rate = 0.01;
   net.momentum = 0.9;
   net.decay = 0.1;
   net.gamma = 0.9;
@@ -45,9 +45,8 @@ void PrintNetwork(Network net) {
     int output_size = layer->output_size;
     int weight_num = input_size * output_size + output_size;
     if (layer->layer_type == DENSE || layer->layer_type == BATCHNORMALIZATION) {
-      printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n",
-             layer_type_str, input_size, output_size, acti_type_str,
-             weight_num);
+      printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n", layer_type_str, input_size,
+             output_size, acti_type_str, weight_num);
       all_weight_num += weight_num;
     } else {
       printf("-- %s\n", layer_type_str);
@@ -55,8 +54,7 @@ void PrintNetwork(Network net) {
   }
   char *loss_str = GetLossStr(net.layers[net.layer_depth - 1]->loss_type);
   char *opt_str = GetOptimizerStr(net.opt_type);
-  printf("-- loss: %s, optimizer: %s, all weight num: %d\n", loss_str, opt_str,
-         all_weight_num);
+  printf("-- loss: %s, optimizer: %s, all weight num: %d\n", loss_str, opt_str, all_weight_num);
 }
 
 float Train(Network *net, Data *data, OptType opt_type, int epoches) {
@@ -73,10 +71,11 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
   // PrintData(data);
   for (int i = 0; i < epoches; ++i) {
     sum = 0;
+    net->epoch = i + 1;
     for (int j = 0; j < batch_num - 1; ++j) {
+      net->batch = j;
       // for (int j = 0; j < 5; ++j) {
-      printf("--------------- epoch %d, batch %d start -----------------\n", i,
-             j);
+      // printf("--------------- epoch %d, batch %d start -----------------\n", i, j);
       // 拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
       // printf("batch %d get data done.\n", j);
@@ -88,20 +87,20 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       UpdateNetwork(net);
       // printf("batch %d update done.\n", j);
       sum += net->loss;
-      printf("batch %d done. loss = %f\n", j, net->loss);
+      // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
     }
     // 处理最后一个batch
     // 要改掉所有的 batch_size
+    net->batch = batch_num;
     int last_batch_size = data->sample_num % batch_size;
     net->batch_size = last_batch_size;
     for (int j = 0; j < net->layer_depth; ++j) {
       net->layers[j]->batch_size = last_batch_size;
     }
     // 最后一个不够 batch_size 的 batch 需要单独处理
-    net->input = NULL;
-    net->input = malloc(last_batch_size * data->sample_size * sizeof(float));
-    net->ground_truth = NULL;
-    net->ground_truth = malloc(last_batch_size * sizeof(float));
+    net->origin_input =
+        realloc(net->origin_input, last_batch_size * data->sample_size * sizeof(float));
+    net->ground_truth = realloc(net->ground_truth, last_batch_size * sizeof(float));
     GetNextBatchData(data, net, last_batch_size, batch_size * (batch_num - 2));
     net->batch_trained_cnt++;
     ForwardNetwork(net);
@@ -114,8 +113,12 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
     for (int j = 0; j < net->layer_depth; ++j) {
       net->layers[j]->batch_size = batch_size;
     }
+    net->origin_input = realloc(net->origin_input, net->input_size * sizeof(float));
+    net->ground_truth = realloc(net->ground_truth, batch_size * sizeof(float));
+
     epoch_loss = sum / (batch_num * batch_size + last_batch_size);
-    printf("epoch %d loss = %f\n", i, epoch_loss);
+    printf("epoch %d loss = %f\n", i + 1, epoch_loss);
+    net->reset(net);
   }
   return epoch_loss;
 }
@@ -133,13 +136,11 @@ float Test(Network *net, Data *data) {
 
 void GetNextBatchData(Data *data, Network *net, int sample_num, int offset) {
   int size = data->sample_size;
-  // printf("sample_num = %d, offset = %d, size = %d\n", sample_num, offset,
-  // size); copy输入
-  memcpy(net->origin_input, data->X + offset,
-         size * sample_num * sizeof(float));
+  // copy输入
+  memcpy(net->origin_input, data->X + offset, data->sample_size * sample_num * sizeof(float));
   net->input = net->origin_input;
   // copy 标签
-  memcpy(net->ground_truth, data->Y + offset, size * sizeof(float));
+  memcpy(net->ground_truth, data->Y + offset, sample_num * sizeof(float));
 }
 
 /**
@@ -150,6 +151,8 @@ void ForwardNetwork(Network *net) {
     net->active_layer_index = i;
     Layer *layer = (net->layers[i]);
     layer->forward(layer, net);
+    if(layer->print_weight)
+    layer->print_weight(layer);
     // layer 是没有 input这个成员变量的，当前层的输入就是上一层的输出
     // 所以没有必要存两份，这里直接让net->input
     // 指向上一层的输出，当做当前层的输入就好了
@@ -163,27 +166,23 @@ void ForwardNetwork(Network *net) {
  *  这里注意要先复制一份网络的输入，因为输入不是一个正常的层
  *  其他的没啥，就是上层的输出变成当前层输入(这里通过net->input维护),
  *  上一层的delta由 net->delta维护，注意啊，这个上一层是 i-1
- *层，这里的net->delta不是参与计算 而是给它赋值，用于下一层的计算
+ *  层，这里的net->delta不是参与计算 而是给它赋值，用于下一层的计算
  **/
 void BackWardNetwork(Network *net) {
   for (int i = net->layer_depth - 1; i >= 0; --i) {
     Layer *layer = net->layers[i];
+    net->active_layer_index = i;
     if (i > 0) {
       Layer *pre_layer = net->layers[i - 1];
       net->input = pre_layer->output;
       net->delta = pre_layer->delta;
     } else {
       // 第一层，没有前一层了
-      net->input = NULL;
-      net->input = malloc(net->batch_size * net->input_size * sizeof(float));
-      memcpy(net->input, net->origin_input,
-             net->batch_size * net->input_size * sizeof(float));
+      net->input = net->origin_input;
       net->delta = NULL;
     }
-    net->active_layer_index = i;
     layer->backward(layer, net);
   }
-  net->input = net->origin_input;
 }
 
 /**
@@ -193,9 +192,9 @@ void BackWardNetwork(Network *net) {
 void UpdateNetwork(Network *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
     Layer *layer = net->layers[i];
+    net->active_layer_index = i;
     if (layer->update) {
       layer->update(layer, net);
-      // layer->print_weight(layer);
     }
   }
 }

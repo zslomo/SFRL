@@ -69,7 +69,6 @@ void AdaGradOptimizer(int input_size, int output_size, float *weights, float *we
   DivTensor(b_size, eps, 1, grad_cum_square_b, increment_tmp_b);
   AxpyTensor(b_size, -lr, increment_tmp_b, biases);
   free(increment_tmp_b);
-
   // weight
   float *increment_tmp_w = calloc(w_size, sizeof(float));
   DivTensor(w_size, eps, 1, grad_cum_square_w, increment_tmp_w);
@@ -113,11 +112,7 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   // ρ*Rt-1 + (1-ρ)*g*g
   AxpyTensor(w_size, 1, grad_tmp_w, grad_cum_square_w);
   free(grad_tmp_w);
-  // printf("bias_grads is :\n");
-  // for (int i = 0; i < b_size; ++i) {
-  //   printf("%0.8f ", bias_grads[i]);
-  // }
-  // printf("\n");
+
   // bias
   // b = b - lr * 1 / sqrt(r + eps)
   float *increment_tmp_b = calloc(b_size, sizeof(float));
@@ -138,7 +133,6 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   DivTensor(w_size, eps, 1, increment_tmp_w, increment_tmp_w);
   AxpyTensor(w_size, -lr, increment_tmp_w, weights);
   free(increment_tmp_w);
-  // printf("grad_cum_square_b[0] = %f\n", grad_cum_square_b[0]);
 }
 
 void AdamOptimizer(int input_size, int output_size, float *weights, float *weight_grads,

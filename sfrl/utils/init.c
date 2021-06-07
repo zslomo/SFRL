@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "init.h"
 
@@ -11,7 +12,6 @@ void InitLayer(float *weights, float *biases, int input_size, int output_size,
                InitType init_type) {
   float scale = sqrt(2. / input_size);
   if (init_type == UNIFORM) {
-
     for (int i = 0; i < output_size * input_size; ++i) {
       weights[i] = scale * rand_uniform(-1, 1);
     }

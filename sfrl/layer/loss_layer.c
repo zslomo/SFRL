@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "../utils/blas.h"
 #include "../loss/loss.h"
 #include "../network/network.h"
 #include "loss_layer.h"
@@ -33,15 +33,12 @@ LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type) {
 
 void ForwardLossLayer(LossLayer *layer, Network *net) {
   assert(net->ground_truth);
+  net->loss = 0;
   int n = net->batch_size * layer->input_size;
   // loss层是最后一层，在forward的时候记录一下整个网络的输出，用来计算metric
   net->output = net->input;
-  memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
-  // printf("before loss output : \n");
-  // for(int i = 0; i < n; i++){
-  //   printf("%f ", net->input[i]);
-  // }
-  // printf("\n");
+  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  InitTensor(layer->output_size * net->batch_size, 0, layer->output);
   // 计算loss
   switch (layer->loss_type) {
   case MSE:
@@ -58,12 +55,11 @@ void ForwardLossLayer(LossLayer *layer, Network *net) {
   default:
     break;
   }
-  printf("loss: ");
+  printf("epoch %d, batch %d, loss: ", net->epoch, net->batch);
   for (int i = 0; i < net->batch_size; ++i) {
-    printf("%0.8f,", layer->output[i]);
+    printf("%f,", layer->output[i]);
     net->loss += layer->output[i];
   }
-  net->loss /= net->batch_size;
   printf("\n");
 }
 

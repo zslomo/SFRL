@@ -30,13 +30,8 @@ SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size) {
 }
 
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
-  memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
-  SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->temperature, layer->output);
-  // printf("softmax output: \n");
-  // for (int i = 0; i < net->batch_size * layer->input_size; ++i) {
-  //   printf("%f ", layer->output[i]);
-  // }
-  // printf("\b\n");
+  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  SoftmaxBatch(net->input, layer->input_size, net->batch_size, layer->temperature, layer->output);
 }
 
 /**
@@ -58,8 +53,7 @@ void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
 void SoftmaxBatch(float *input, int n, int batch_size, float temp, float *output) {
   for (int i = 0; i < batch_size; ++i) {
     int offset = i * n;
-    // printf("sample: %d, offset: %d\n", i, offset);
-    // printf("intput : %f, %f\n", (input + offset)[0], (input + offset)[1]);
+    // printf("input : %f, %f\n", (input + offset)[0], (input + offset)[1]);
     SoftmaxCore(input + offset, n, temp, output + offset);
   }
 }

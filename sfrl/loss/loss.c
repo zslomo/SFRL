@@ -32,14 +32,16 @@ void CrossEntropy(int batch_size, int class_num, float *pred, float *truth, floa
     for (int j = 0; j < class_num; ++j) {
       // weight_ce 是强化学习的特殊形式，强化学习没有监督信号，
       // truth并不是一个类别标签 而是权重
-      int t = weight_ce ? truth[i] : (int)truth[i] ^ j;
+      int t = weight_ce ? truth[i] : ((int)truth[i] ^ j) ^ 1;
       loss[i] -= t * log(pred[class_num * i + j]);
-      // if (loss[i] > 100 || loss[i] < -100) {
-      //   printf("loss: %f,pred : %f ",loss[i], pred[class_num * i + j]);
-      // }
+      // if (loss[i] > 1 || loss[i] < 0) {
+        // printf(
+        //     "i: %d, j: %d, loss: %f, loss[i]: %f, t: %d, log: %f, pred : %f, turh: %d, xor: %d \n",
+        //     i, j, loss[i], t * log(pred[class_num * i + j]), t, log(pred[class_num * i + j]), pred[class_num * i + j],
+        //     (int)truth[i], ((int)truth[i] ^ j) ^ 1);
+      // }s
     }
   }
-  // printf("\n");
 }
 
 void BackwardCrossEntropy(int batch_size, int class_num, float *pred, float *truth, float *delta,

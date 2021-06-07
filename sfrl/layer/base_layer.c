@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "base_layer.h"
 #include "../network/network.h"
-#include "../utils/blas.h"
 #include "../optimizer/optimizer.h"
+#include "../utils/blas.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void UpdateLayer(Layer *layer, Network *net) {
   int input_size = layer->input_size;
@@ -15,23 +15,23 @@ void UpdateLayer(Layer *layer, Network *net) {
   float *weight_grads = layer->weight_grads;
   float *biases = layer->biases;
   float *bias_grads = layer->bias_grads;
-  if(!layer->grad_cum_w){
+  if (!layer->grad_cum_w) {
     layer->grad_cum_w = calloc(w_size, sizeof(float));
   }
   float *grad_cum_w = layer->grad_cum_w;
-  if(!layer->grad_cum_b){
+  if (!layer->grad_cum_b) {
     layer->grad_cum_b = calloc(b_size, sizeof(float));
   }
   float *grad_cum_b = layer->grad_cum_b;
-  if(!layer->grad_cum_square_w){
+  if (!layer->grad_cum_square_w) {
     layer->grad_cum_square_w = calloc(w_size, sizeof(float));
   }
   float *grad_cum_square_w = layer->grad_cum_square_w;
-  if(!layer->grad_cum_square_b){
+  if (!layer->grad_cum_square_b) {
     layer->grad_cum_square_b = calloc(b_size, sizeof(float));
   }
   float *grad_cum_square_b = layer->grad_cum_square_b;
-  
+
   float lr = net->learning_rate;
   float beta_1 = net->beta_1;
   float beta_2 = net->beta_2;
@@ -124,10 +124,10 @@ void FreeLayer(Layer *layer) {
 
 void ResetLayer(Layer *layer) {
   if (layer->input) {
-    InitTensor(layer->input_size, 0, layer->input);
+    InitTensor(layer->input_size * layer->batch_size, 0, layer->input);
   }
   if (layer->output) {
-    InitTensor(layer->output_size, 0, layer->output);
+    InitTensor(layer->output_size * layer->batch_size, 0, layer->output);
   }
   if (layer->delta) {
     InitTensor(layer->output_size * layer->batch_size, 0, layer->delta);
@@ -136,7 +136,7 @@ void ResetLayer(Layer *layer) {
     InitTensor(layer->output_size * layer->input_size, 0, layer->output);
   }
   if (layer->bias_grads) {
-    InitTensor(layer->output_size, 0, layer->output);
+    InitTensor(layer->output_size * layer->input_size, 0, layer->output);
   }
   if (layer->bn_gamma_grads) {
     InitTensor(layer->output_size, 0, layer->bn_gamma_grads);
@@ -145,10 +145,10 @@ void ResetLayer(Layer *layer) {
     InitTensor(layer->output_size, 0, layer->bn_beta_grads);
   }
   if (layer->output_normed) {
-    InitTensor(layer->output_size, 0, layer->output_normed);
+    InitTensor(layer->output_size * layer->input_size, 0, layer->output_normed);
   }
   if (layer->output_before_norm) {
-    InitTensor(layer->output_size, 0, layer->output_before_norm);
+    InitTensor(layer->output_size * layer->input_size, 0, layer->output_before_norm);
   }
 }
 
@@ -156,7 +156,6 @@ void PrintWeight(Layer *layer) {
   int n = layer->input_size;
   int m = layer->output_size;
   int batch_size = layer->batch_size;
-
   printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
   printf("bias:\n");
   for (int i = 0; i < m; ++i) {
@@ -164,8 +163,8 @@ void PrintWeight(Layer *layer) {
   }
   printf("\n");
   printf("weight :\n");
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
       printf("%f ", layer->weights[n * i + j]);
     }
     printf("\n");
@@ -213,8 +212,8 @@ void PrintGrad(Layer *layer) {
   }
   printf("\n");
   printf("weight grad:\n");
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
+  for (int i = 0; i < m; ++i) {
+    for (int j = 0; j < n; ++j) {
       printf("%f ", layer->weight_grads[n * i + j]);
     }
     printf("\n");

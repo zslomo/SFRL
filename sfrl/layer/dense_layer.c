@@ -1,14 +1,14 @@
+#include "dense_layer.h"
+#include "../activation/activation.h"
+#include "../optimizer/optimizer.h"
+#include "../utils/blas.h"
+#include "base_layer.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "dense_layer.h"
-#include "base_layer.h"
-#include "../activation/activation.h"
-#include "../optimizer/optimizer.h"
-#include "../utils/blas.h"
 
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
                           InitType init_type) {
@@ -45,8 +45,8 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
 void UpdateDenseLayer(DenseLayer *layer, Network *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, Network *net) {
-  memcpy(layer->input, net->input, layer->input_size * layer->batch_size);
-  int output_tensor_size = layer->output_size * layer->batch_size;
+  memcpy(layer->input, net->input, layer->input_size * net->batch_size);
+  int output_tensor_size = layer->output_size * net->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
 
   /**
@@ -62,24 +62,23 @@ void ForwardDenseLayer(DenseLayer *layer, Network *net) {
    **/
   int TransA = 0;
   int TransB = 1;
-  Gemm(TransA, TransB, layer->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
+  Gemm(TransA, TransB, net->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
        layer->input_size, layer->weights, layer->input_size, layer->output, layer->output_size);
 
   /**
-    计算 intput × weights->T + bias
+    计算 + bias
    **/
-  for (int i = 0; i < layer->batch_size; ++i) {
-    AxpyTensor(layer->output_size, 1, layer->biases, layer->output + i * layer->input_size);
+  for (int i = 0; i < net->batch_size; ++i) {
+    AxpyTensor(layer->output_size, 1, layer->biases, layer->output + i * layer->output_size);
   }
-
   /**
-   *  计算 f(intput × weights->T + bias)
+   *  计算 f(intput × weights + bias)
    **/
   ActivateTensor(layer->output, output_tensor_size, layer->acti_type);
 }
 
 void BackwardDenseLayer(DenseLayer *layer, Network *net) {
-  int output_tensor_size = layer->output_size * layer->batch_size;
+  int output_tensor_size = layer->output_size * net->batch_size;
   /**
    *  计算 delta
    *  delta = f'(x) * delta_pre, delta_pre在之前就算好了。
@@ -87,15 +86,13 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  在这里直接乘 激活函数的导数
    **/
   GradientTensor(layer->output, output_tensor_size, layer->acti_type, layer->delta);
-  
   /**
    *  计算 bias_grads = delta
    **/
-  for (int i = 0; i < layer->batch_size; ++i) {
+  for (int i = 0; i < net->batch_size; ++i) {
     AxpyTensor(layer->output_size, 1, layer->delta + i * layer->output_size, layer->bias_grads);
     // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
-
   /**
    *  计算 当前层的weight_grads = delta->T × input
    *  维度是 M*K × K*N = M*N
@@ -109,7 +106,7 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    **/
   int TransA = 1;
   int TransB = 0;
-  Gemm(TransA, TransB, layer->output_size, layer->input_size, layer->batch_size, 1, 1, layer->delta,
+  Gemm(TransA, TransB, layer->output_size, layer->input_size, net->batch_size, 1, 1, layer->delta,
        layer->output_size, net->input, layer->input_size, layer->weight_grads, layer->input_size);
   /**
    *  计算 后一层的delta，即net->delta
@@ -123,11 +120,11 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  N ldb ldc input_size, B的列
    *  K lda output_size, A的列 B的行 ALPHA 和 BETA这里都是1
    **/
-  // printf("M:%d, N:%d, K:%d\n", layer->batch_size, layer->input_size, layer->output_size);
+  // printf("M:%d, N:%d, K:%d\n", net->batch_size, layer->input_size, layer->output_size);
   if (net->delta) {
     int TransA = 0;
     int TransB = 0;
-    Gemm(TransA, TransB, layer->batch_size, layer->input_size, layer->output_size, 1, 1,
+    Gemm(TransA, TransB, net->batch_size, layer->input_size, layer->output_size, 1, 1,
          layer->delta, layer->output_size, layer->weights, layer->input_size, net->delta,
          layer->input_size);
   }

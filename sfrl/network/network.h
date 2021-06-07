@@ -13,7 +13,8 @@ struct Network {
   Layer **layers;
   NetMode mode;
   int layer_depth;
-  float epoch;
+  int epoch;
+  int batch;
   int active_layer_index;
   float loss;
   
