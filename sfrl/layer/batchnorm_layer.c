@@ -11,9 +11,10 @@
 #include <string.h>
 
 BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
-                                  InitType init_type) {
+                                  InitType init_type, char *layer_name) {
   BatchNormLayer layer = {0};
   layer.layer_type = BATCHNORMALIZATION;
+  layer.layer_name = layer_name;
   layer.batch_size = batch_size;
   layer.input_size = input_size;
   int output_size = input_size;

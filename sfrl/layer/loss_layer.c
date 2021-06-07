@@ -8,10 +8,10 @@
 #include "../network/network.h"
 #include "loss_layer.h"
 
-LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type) {
+LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, char *layer_name) {
   LossLayer layer = {0};
   layer.layer_type = LOSS;
-
+  layer.layer_name = layer_name;
   layer.batch_size = batch_size;
   layer.input_size = input_size;
   layer.output_size = input_size;

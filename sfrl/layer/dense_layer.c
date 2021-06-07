@@ -11,9 +11,10 @@
 #include <string.h>
 
 DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
-                          InitType init_type) {
+                          InitType init_type, char *layer_name) {
   DenseLayer layer = {0};
   layer.layer_type = DENSE;
+  layer.layer_name = layer_name;
   layer.batch_size = batch_size;
   layer.input_size = input_size;
   layer.output_size = output_size;

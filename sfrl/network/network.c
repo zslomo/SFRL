@@ -72,7 +72,8 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
   for (int i = 0; i < epoches; ++i) {
     sum = 0;
     net->epoch = i + 1;
-    for (int j = 0; j < batch_num - 1; ++j) {
+    // for (int j = 0; j < batch_num - 1; ++j) {
+      for (int j = 0; j < 3; ++j) {
       net->batch = j;
       // for (int j = 0; j < 5; ++j) {
       // printf("--------------- epoch %d, batch %d start -----------------\n", i, j);
@@ -151,8 +152,8 @@ void ForwardNetwork(Network *net) {
     net->active_layer_index = i;
     Layer *layer = (net->layers[i]);
     layer->forward(layer, net);
-    if(layer->print_weight)
-    layer->print_weight(layer);
+    if(layer->print_delta)
+    layer->print_delta(layer, net->batch_size);
     // layer 是没有 input这个成员变量的，当前层的输入就是上一层的输出
     // 所以没有必要存两份，这里直接让net->input
     // 指向上一层的输出，当做当前层的输入就好了

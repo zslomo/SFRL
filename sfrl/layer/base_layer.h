@@ -34,6 +34,7 @@ struct Layer {
   LayerType layer_type; // 层类型
   ActiType acti_type;   // 激活函数
   LossType loss_type;   // 损失函数类型
+  char *layer_name;
 
   int batch_normalize;
   /**

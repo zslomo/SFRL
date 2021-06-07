@@ -67,11 +67,11 @@ int ReadData(char *filename, char **samples) {
 }
 
 int BuildNet(Data *data, Network *net) {
-  int batch_size = 16;
-  DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 8, RELU, NORMAL);
-  DenseLayer dnn_2 = MakeDenseLayer(batch_size, 8, 2, RELU, NORMAL);
-  SoftmaxLayer sm_1 = MakeSoftmaxLayer(batch_size, 2);
-  LossLayer loss_layer = MakeLossLayer(batch_size, 2, CE);
+  int batch_size = 4;
+  DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 8, RELU, NORMAL, "dense_1");
+  DenseLayer dnn_2 = MakeDenseLayer(batch_size, 8, 2, RELU, NORMAL, "dense_2");
+  SoftmaxLayer sm_1 = MakeSoftmaxLayer(batch_size, 2, "softmax");
+  LossLayer loss_layer = MakeLossLayer(batch_size, 2, CE, "loss");
 
   net->batch_size = batch_size;
   net->sample_size = data->sample_size;
@@ -81,7 +81,7 @@ int BuildNet(Data *data, Network *net) {
   net->layers[3] = &loss_layer;
   printf("start train...\n");
   net->learning_rate = 0.1;
-  net->train(net, data, SGD, 2);
+  net->train(net, data, SGD, 1);
 }
 int main(int argc, char **argv) {
   printf("Read data...\n");

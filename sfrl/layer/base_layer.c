@@ -156,7 +156,12 @@ void PrintWeight(Layer *layer) {
   int n = layer->input_size;
   int m = layer->output_size;
   int batch_size = layer->batch_size;
-  printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
+  if (layer->layer_name) {
+    printf("layer %s weight size = %d × %d + %d\n", layer->layer_name, n, m, m);
+  } else {
+    printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
+  }
+
   printf("bias:\n");
   for (int i = 0; i < m; ++i) {
     printf("%f ", layer->biases[i]);
@@ -176,6 +181,11 @@ void PrintInput(Layer *layer, int batch_num) {
   int n = layer->input_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
+  if (layer->layer_name) {
+    printf("layer %s input size = %d × %d\n", layer->layer_name, batch_size, n);
+  } else {
+    printf("layer %s input size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  }
   printf("layer %s input size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
   printf("inputs:\n");
 
@@ -191,6 +201,11 @@ void PrintOutput(Layer *layer, int batch_num) {
   int n = layer->output_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
+  if (layer->layer_name) {
+    printf("layer %s output size = %d × %d\n", layer->layer_name, batch_size, n);
+  } else {
+    printf("layer %s output size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  }
   printf("layer %s output size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
   printf("outputs:\n");
 
@@ -205,7 +220,12 @@ void PrintOutput(Layer *layer, int batch_num) {
 void PrintGrad(Layer *layer) {
   int n = layer->input_size;
   int m = layer->output_size;
-  printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
+  if (layer->layer_name) {
+    printf("layer %s weight size = %d × %d + %d\n", layer->layer_name, n, m, m);
+  } else {
+    printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
+  }
+
   printf("bias grad:\n");
   for (int i = 0; i < m; ++i) {
     printf("%f ", layer->bias_grads[i]);
@@ -224,7 +244,12 @@ void PrintDelta(Layer *layer, int batch_num) {
   int n = layer->output_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
-  printf("layer %s delta size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  if (layer->layer_name) {
+    printf("layer %s delta size = %d × %d\n", layer->layer_name, batch_size, n);
+  } else {
+    printf("layer %s delta size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
+  }
+
   printf("delta:\n");
 
   for (int i = 0; i < batch_num; ++i) {
