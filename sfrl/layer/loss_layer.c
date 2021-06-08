@@ -8,18 +8,18 @@
 #include "../network/network.h"
 #include "loss_layer.h"
 
-LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, char *layer_name) {
+LossLayer MakeLossLayer(int batch_size, int input_size, int output_size, LossType loss_type, char *layer_name) {
   LossLayer layer = {0};
   layer.layer_type = LOSS;
   layer.layer_name = layer_name;
   layer.batch_size = batch_size;
   layer.input_size = input_size;
-  layer.output_size = 1;
+  layer.output_size = output_size;
   layer.loss_type = loss_type;
 
   layer.input = calloc(input_size * batch_size, sizeof(float));
   layer.output = calloc(input_size * batch_size, sizeof(float));
-  layer.delta = calloc(input_size * batch_size, sizeof(float));
+  layer.delta = calloc(output_size * batch_size, sizeof(float));
 
   layer.forward = ForwardLossLayer;
   layer.backward = BackwardLossLayer;

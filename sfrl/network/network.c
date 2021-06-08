@@ -72,22 +72,27 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
   for (int i = 0; i < epoches; ++i) {
     sum = 0;
     net->epoch = i + 1;
-    // for (int j = 0; j < batch_num - 1; ++j) {
-    for (int j = 0; j < 3; ++j) {
+    for (int j = 0; j < batch_num - 1; ++j) {
       net->batch = j;
-      // for (int j = 0; j < 5; ++j) {
       // printf("--------------- epoch %d, batch %d start -----------------\n", i, j);
       // 拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
-      
-      printf("batch %d get data done.---------------------------------------------------\n", j);
+      // printf("batch %d get data done.---------------------------------------------------\n", j);
       net->batch_trained_cnt += batch_size;
       ForwardNetwork(net);
-      printf("batch %d forward done.-----------------------------------------------------\n", j);
+      net->layers[2]->print_input(net->layers[2], 4);
+      // net->layers[0]->print_grad(net->layers[0]);
+      // net->layers[0]->print_update(net->layers[0]);
+      net->layers[1]->print_delta(net->layers[1], 4);
+      
+      // printf("batch %d forward done.-----------------------------------------------------\n",
+      // j);
       BackWardNetwork(net);
-      printf("batch %d backward done.-----------------------------------------------------\n", j);
+      // printf("batch %d backward done.-----------------------------------------------------\n",
+      // j);
       UpdateNetwork(net);
-      printf("batch %d update done.-------------------------------------------------------\n", j);
+      // printf("batch %d update done.-------------------------------------------------------\n",
+      // j);
       sum += net->loss;
       // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
     }
@@ -151,7 +156,8 @@ void GetNextBatchData(Data *data, Network *net, int sample_num, int offset) {
 void ForwardNetwork(Network *net) {
   for (int i = 0; i < net->layer_depth; ++i) {
     net->active_layer_index = i;
-    Layer *layer = (net->layers[i]);
+    Layer *layer = net->layers[i];
+    layer->ground_truth = net->ground_truth;
     layer->forward(layer, net);
     net->input = layer->output;
   }
@@ -180,18 +186,6 @@ void BackWardNetwork(Network *net) {
       net->delta = NULL;
     }
     layer->backward(layer, net);
-    
-    if (layer->print_delta) {
-      layer->print_input(layer, net->batch_size);
-      if (layer->print_weight){
-        layer->print_weight(layer);
-        layer->print_grad(layer);
-      }
-        
-      layer->print_output(layer, net->batch_size);
-      layer->print_delta(layer, net->batch_size);
-      
-    }
   }
 }
 

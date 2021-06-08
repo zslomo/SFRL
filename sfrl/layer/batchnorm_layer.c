@@ -23,7 +23,7 @@ BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_
   layer.input = calloc(input_size, sizeof(float));
   layer.output = calloc(input_size, sizeof(float));
   // 这里的delta是上一层传承下来的
-  layer.delta = calloc(input_size * batch_size, sizeof(float));
+  layer.delta = calloc(output_size * batch_size, sizeof(float));
   /**
    *  bn 层有两个需要学习的参数，γ β，这里 β 其实可以复用bias，但是会造成代码阅读困难
    *  本身beta也没有多少空间占用，就还是给一个单独的参数了

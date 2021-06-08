@@ -7,6 +7,6 @@ typedef Layer LossLayer;
 
 void ForwardLossLayer(LossLayer *loss_layer, Network *net);
 void BackwardLossLayer(LossLayer *loss_layer, Network *net);
-LossLayer MakeLossLayer(int batch_size, int input_size, LossType loss_type, char *layer_name);
+LossLayer MakeLossLayer(int batch_size, int input_size, int output_size, LossType loss_type, char *layer_name);
 
 #endif

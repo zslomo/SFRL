@@ -28,6 +28,8 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.biases = calloc(output_size, sizeof(float));
   layer.weight_grads = calloc(input_size * output_size, sizeof(float));
   layer.bias_grads = calloc(output_size, sizeof(float));
+  layer.weight_updates = calloc(output_size * input_size, sizeof(float));
+  layer.bias_updates = calloc(output_size, sizeof(float));
   InitLayer(layer.weights, layer.biases, input_size, output_size, init_type);
 
   layer.forward = ForwardDenseLayer;
@@ -38,6 +40,7 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.print_weight = PrintWeight;
   layer.print_grad = PrintGrad;
   layer.print_delta = PrintDelta;
+  layer.print_update = PrintUpdate;
   layer.reset = ResetLayer;
 
   return layer;
@@ -91,11 +94,11 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  计算 bias_grads = delta
    **/
   for (int i = 0; i < net->batch_size; ++i) {
-    AxpyTensor(layer->output_size, 1, layer->delta + i * layer->output_size, layer->bias_grads);
+    CopyTensor(layer->output_size, layer->delta + i * layer->output_size, layer->bias_grads);
     // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
   /**
-   *  计算 当前层的weight_grads = delta->T × input
+   *  计算 当前层的weight_grads = delta.T × input
    *  维度是 M*K × K*N = M*N
    *  A delta N*M
    *  B input K*N
@@ -125,8 +128,7 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
   if (net->delta) {
     int TransA = 0;
     int TransB = 0;
-    Gemm(TransA, TransB, net->batch_size, layer->input_size, layer->output_size, 1, 1,
-         layer->delta, layer->output_size, layer->weights, layer->input_size, net->delta,
-         layer->input_size);
+    Gemm(TransA, TransB, net->batch_size, layer->input_size, layer->output_size, 1, 1, layer->delta,
+         layer->output_size, layer->weights, layer->input_size, net->delta, layer->input_size);
   }
 }

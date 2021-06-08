@@ -48,8 +48,10 @@ void BackwardCrossEntropy(int batch_size, int class_num, float *pred, float *tru
   float eps = 1e-8;
   for (int i = 0; i < batch_size; ++i) {
     for (int j = 0; j < class_num; ++j) {
-      int t = weight_ce ? truth[i] : (int)truth[i] & j;
+      int t = weight_ce ? truth[i] : ((int)truth[i] ^ j) ^ 1;
       delta[class_num * i + j] = t - pred[class_num * i + j];
+      // printf("i:%d, j:%d, delta:%f, t: %d, pred: %f\n", i, j, delta[class_num * i + j], t,
+      //        pred[class_num * i + j]);
     }
   }
 }

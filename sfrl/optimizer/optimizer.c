@@ -4,14 +4,14 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 void SgdOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
                   float *biases, float *bias_grads, float *grad_cum_w, float *grad_cum_b, float lr,
-                  float momentum) {
+                  float momentum, float *w_updates, float *b_updates) {
   int w_size = input_size * output_size;
   int b_size = output_size;
-
   // bias
   float *grad_tmp_b = calloc(b_size, sizeof(float));
   CopyTensor(b_size, grad_cum_b, grad_tmp_b);
@@ -21,6 +21,7 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
   AxpyTensor(b_size, 1, bias_grads, grad_tmp_b);
   // b = b - lr * (g + ρVt-1)
   AxpyTensor(b_size, -lr, grad_tmp_b, biases);
+  CopyTensor(b_size, grad_tmp_b, b_updates);
   // 动量更新
   CopyTensor(b_size, grad_tmp_b, grad_cum_b);
   free(grad_tmp_b);
@@ -33,7 +34,8 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
   // g + ρVt-1
   AxpyTensor(w_size, 1, weight_grads, grad_tmp_w);
   // w = w - lr * (g + ρVt-1)
-  AxpyTensor(w_size, -lr, grad_tmp_w, biases);
+  AxpyTensor(w_size, -lr, grad_tmp_w, weights);
+  CopyTensor(w_size, grad_tmp_w, w_updates);
   // 动量更新
   CopyTensor(w_size, grad_tmp_w, grad_cum_w);
   free(grad_tmp_w);
@@ -41,7 +43,7 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
 
 void AdaGradOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
                       float *biases, float *bias_grads, float *grad_cum_square_w,
-                      float *grad_cum_square_b, float lr) {
+                      float *grad_cum_square_b, float lr, float *w_updates, float *b_updates) {
   int w_size = input_size * output_size;
   int b_size = output_size;
 
@@ -67,18 +69,21 @@ void AdaGradOptimizer(int input_size, int output_size, float *weights, float *we
   // bias
   float *increment_tmp_b = calloc(b_size, sizeof(float));
   DivTensor(b_size, eps, 1, grad_cum_square_b, increment_tmp_b);
+  CopyTensor(b_size, grad_cum_square_b, b_updates);
   AxpyTensor(b_size, -lr, increment_tmp_b, biases);
   free(increment_tmp_b);
   // weight
   float *increment_tmp_w = calloc(w_size, sizeof(float));
   DivTensor(w_size, eps, 1, grad_cum_square_w, increment_tmp_w);
-  AxpyTensor(w_size, -lr, weight_grads, weights);
+  CopyTensor(w_size, increment_tmp_w, w_updates);
+  AxpyTensor(w_size, -lr, increment_tmp_w, weights);
   free(increment_tmp_w);
 }
 
 void RmsPropOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
                       float *biases, float *bias_grads, float *grad_cum_square_w,
-                      float *grad_cum_square_b, float lr, float decay) {
+                      float *grad_cum_square_b, float lr, float decay, float *w_updates,
+                      float *b_updates) {
   int w_size = input_size * output_size;
   int b_size = output_size;
   /**
@@ -124,6 +129,7 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   DivTensor(b_size, eps, 1, increment_tmp_b, increment_tmp_b);
   // b - lr * 1 / sqrt(r + eps)
   AxpyTensor(b_size, -lr, increment_tmp_b, biases);
+  CopyTensor(b_size, increment_tmp_b, b_updates);
   free(increment_tmp_b);
 
   // weight
@@ -132,13 +138,14 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   SqrtTensor(w_size, increment_tmp_w, increment_tmp_w);
   DivTensor(w_size, eps, 1, increment_tmp_w, increment_tmp_w);
   AxpyTensor(w_size, -lr, increment_tmp_w, weights);
+  CopyTensor(w_size, increment_tmp_w, w_updates);
   free(increment_tmp_w);
 }
 
 void AdamOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
                    float *biases, float *bias_grads, float *grad_cum_w, float *grad_cum_square_w,
                    float *grad_cum_b, float *grad_cum_square_b, float lr, float beta_1,
-                   float beta_2) {
+                   float beta_2, float *w_updates, float *b_updates) {
   int w_size = input_size * output_size;
   int b_size = output_size;
 
@@ -205,11 +212,14 @@ void AdamOptimizer(int input_size, int output_size, float *weights, float *weigh
   SqrtTensor(b_size, v_hat_b, v_hat_b);
   DivTensor(b_size, eps, 1, v_hat_b, v_hat_b);
   DotTensor(b_size, m_hat_b, v_hat_b);
+  CopyTensor(b_size, v_hat_b, b_updates);
   AxpyTensor(b_size, -lr, v_hat_b, biases);
+
   // weights
   SqrtTensor(w_size, v_hat_w, v_hat_w);
   DivTensor(w_size, eps, 1, v_hat_w, v_hat_w);
   DotTensor(w_size, m_hat_w, v_hat_w);
+  CopyTensor(w_size, v_hat_w, w_updates);
   AxpyTensor(w_size, -lr, v_hat_w, weights);
 }
 

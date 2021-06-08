@@ -55,6 +55,7 @@ struct Layer {
   int output_size;
   int batch_size;
   int group_size;
+  float *ground_truth;
 
   // 计算相关
   /**
@@ -64,8 +65,10 @@ struct Layer {
   float *delta;    
   float *weights;
   float *weight_grads; // 权重更新值，反向传播的导数
+  float *weight_updates;
   float *biases;
   float *bias_grads; // 偏置更新值，反向传播的导数
+  float *bias_updates;
 
   // bn相关
   float *bn_gammas;
@@ -112,6 +115,7 @@ struct Layer {
   void (*print_output)(struct Layer *, int);
   void (*print_grad)(struct Layer *);
   void (*print_delta)(struct Layer *, int);
+  void (*print_update)(struct Layer *);
   void (*reset)(struct Layer *);
 };
 
@@ -122,6 +126,7 @@ void PrintInput(Layer *layer, int batch_num);
 void PrintOutput(Layer *layer, int batch_num);
 void PrintGrad(Layer *layer);
 void PrintDelta(Layer *layer, int batch_num);
+void PrintUpdate(Layer *layer);
 char *GetLayerTypeStr(LayerType layer_type);
 void ResetLayer(Layer *layer);
 

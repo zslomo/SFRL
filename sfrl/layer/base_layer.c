@@ -2,6 +2,8 @@
 #include "../network/network.h"
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
+#include "../utils/utils.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,25 +33,35 @@ void UpdateLayer(Layer *layer, Network *net) {
     layer->grad_cum_square_b = calloc(b_size, sizeof(float));
   }
   float *grad_cum_square_b = layer->grad_cum_square_b;
+  float *w_updates = layer->weight_updates;
+  float *b_updates = layer->bias_updates;
 
   float lr = net->learning_rate;
   float beta_1 = net->beta_1;
   float beta_2 = net->beta_2;
   float momentum = net->momentum;
   float decay = net->decay;
+
   switch (net->opt_type) {
   case ADAM:
     AdamOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads, grad_cum_w,
-                  grad_cum_square_w, grad_cum_b, grad_cum_square_b, lr, beta_1, beta_2);
+                  grad_cum_square_w, grad_cum_b, grad_cum_square_b, lr, beta_1, beta_2, w_updates,
+                  b_updates);
+    break;
   case SGD:
     SgdOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads, grad_cum_w,
-                 grad_cum_b, lr, momentum);
+                 grad_cum_b, lr, momentum, w_updates, b_updates);
+    break;
   case ADAGRAD:
     AdaGradOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads,
-                     grad_cum_square_w, grad_cum_square_b, lr);
+                     grad_cum_square_w, grad_cum_square_b, lr, w_updates, b_updates);
+    break;
   case RMSPROP:
     RmsPropOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads,
-                     grad_cum_square_w, grad_cum_square_b, lr, decay);
+                     grad_cum_square_w, grad_cum_square_b, lr, decay, w_updates, b_updates);
+    break;
+  default:
+    break;
   }
 }
 
@@ -153,107 +165,200 @@ void ResetLayer(Layer *layer) {
 }
 
 void PrintWeight(Layer *layer) {
+  int num_size = 8;
   int n = layer->input_size;
   int m = layer->output_size;
   int batch_size = layer->batch_size;
-  if (layer->layer_name) {
-    printf("layer %s weight size = %d × %d + %d\n", layer->layer_name, n, m, m);
-  } else {
-    printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
-  }
 
+  printf("layer %s weight size = %d × %d + %d\n", layer->layer_name, n, m, m);
   printf("bias:\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+  printf("|");
   for (int i = 0; i < m; ++i) {
-    printf("%f ", layer->biases[i]);
+    float res = layer->biases[i];
+    if (res >= 0) {
+      printf(" %s |", FloatToString(num_size, res));
+    } else {
+      printf("%s |", FloatToString(num_size, res));
+    }
   }
   printf("\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+
   printf("weight :\n");
+  PrintGridOutline(n * (num_size + 3) - 1);
   for (int i = 0; i < m; ++i) {
+    printf("|");
     for (int j = 0; j < n; ++j) {
-      printf("%f ", layer->weights[n * i + j]);
+      float res = layer->weights[n * i + j];
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+        printf("%s |", FloatToString(num_size, res));
+      }
     }
     printf("\n");
   }
-  printf("\n");
+  PrintGridOutline(n * (num_size + 3) - 1);
 }
 
 void PrintInput(Layer *layer, int batch_num) {
+  assert(layer->input);
+  assert(layer->ground_truth);
+
+  int num_size = 8;
   int n = layer->input_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
-  if (layer->layer_name) {
-    printf("layer %s input size = %d × %d\n", layer->layer_name, batch_size, n);
-  } else {
-    printf("layer %s input size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
-  }
-  printf("inputs:\n");
+
+  printf("layer %s input size = %d × %d:\n", layer->layer_name, batch_size, n);
+  PrintGridOutline((n + 1) * (num_size + 3) - 1);
 
   for (int i = 0; i < batch_num; ++i) {
-    for (int j = 0; j < n; ++j) {
-      printf("%f ", layer->input[n * i + j]);
+    printf("|");
+    for (int j = 0; j < n + 1; ++j) {
+      float res;
+      if (j == n) {
+        res = layer->ground_truth[i];
+      } else {
+        res = layer->input[n * i + j];
+      }
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+        printf("%s |", FloatToString(num_size, res));
+      }
     }
     printf("\n");
   }
+  PrintGridOutline((n + 1) * (num_size + 3) - 1);
 }
 
 void PrintOutput(Layer *layer, int batch_num) {
+  int num_size = 8;
   int n = layer->output_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
-  if (layer->layer_name) {
-    printf("layer %s output size = %d × %d\n", layer->layer_name, batch_size, n);
-  } else {
-    printf("layer %s output size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
-  }
-  printf("outputs:\n");
 
+  printf("layer: %s, output size = %d × %d:\n", layer->layer_name, batch_size, n);
+  // PrintGridInnerline(n, 10);
+  PrintGridOutline(n * (num_size + 3) - 1);
+  // PrintGridColums(n , num_size + 2);
+  // PrintGridOutline((n + 1) * (num_size + 3) - 1);
   for (int i = 0; i < batch_num; ++i) {
+    // printf("| %d", i);
+    // for (int j = 0; j < num_size - GetIntCharCount(i); ++j) {
+    //   printf(" ");
+    // }
+    printf("|");
     for (int j = 0; j < n; ++j) {
-      printf("%f ", layer->output[n * i + j]);
+      float res = layer->output[n * i + j];
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+        printf("%s |", FloatToString(num_size, res));
+      }
     }
     printf("\n");
   }
+  PrintGridOutline(n * (num_size + 3) - 1);
 }
 
 void PrintGrad(Layer *layer) {
+  int num_size = 8;
   int n = layer->input_size;
   int m = layer->output_size;
-  if (layer->layer_name) {
-    printf("layer %s weight size = %d × %d + %d\n", layer->layer_name, n, m, m);
-  } else {
-    printf("layer %s weight size = %d × %d + %d\n", GetLayerTypeStr(layer->layer_type), n, m, m);
-  }
+  printf("layer %s weight size = %d × %d + %d:\n", layer->layer_name, n, m, m);
   printf("bias grad:\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+  printf("|");
   for (int i = 0; i < m; ++i) {
-    printf("%f ", layer->bias_grads[i]);
+    float res = layer->bias_grads[i];
+    if (res >= 0) {
+      printf(" %s |", FloatToString(num_size, res));
+    } else {
+      printf("%s |", FloatToString(num_size, res));
+    }
   }
   printf("\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+
   printf("weight grad:\n");
+  PrintGridOutline(n * (num_size + 3) - 1);
   for (int i = 0; i < m; ++i) {
+    printf("|");
     for (int j = 0; j < n; ++j) {
-      printf("%f ", layer->weight_grads[n * i + j]);
+      float res = layer->weight_grads[n * i + j];
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+
+        printf("%s |", FloatToString(num_size, res));
+      }
     }
     printf("\n");
   }
+  PrintGridOutline(n * (num_size + 3) - 1);
 }
 
 void PrintDelta(Layer *layer, int batch_num) {
+  int num_size = 8;
   int n = layer->output_size;
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
-  if (layer->layer_name) {
-    printf("layer %s delta size = %d × %d\n", layer->layer_name, batch_size, n);
-  } else {
-    printf("layer %s delta size = %d × %d\n", GetLayerTypeStr(layer->layer_type), batch_size, n);
-  }
-  printf("delta:\n");
-
+  printf("layer %s delta size = %d × %d:\n", layer->layer_name, batch_size, n);
+  PrintGridOutline(n * (num_size + 3) - 1);
   for (int i = 0; i < batch_num; ++i) {
+    printf("|");
     for (int j = 0; j < n; ++j) {
-      printf("%f ", layer->delta[n * i + j]);
+      float res = layer->delta[n * i + j];
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+        printf("%s |", FloatToString(num_size, res));
+      }
     }
     printf("\n");
   }
+  PrintGridOutline(n * (num_size + 3) - 1);
+}
+
+void PrintUpdate(Layer *layer) {
+  int num_size = 8;
+  int n = layer->input_size;
+  int m = layer->output_size;
+  int batch_size = layer->batch_size;
+  printf("layer %s update size = %d × %d + %d\n", layer->layer_name, n, m, m);
+
+  printf("bias update:\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+  printf("|");
+  for (int i = 0; i < m; ++i) {
+    float res = layer->bias_updates[i];
+    if (res >= 0) {
+      printf(" %s |", FloatToString(num_size, res));
+    } else {
+      printf("%s |", FloatToString(num_size, res));
+    }
+  }
+  printf("\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+
+  printf("weight update:\n");
+  PrintGridOutline(n * (num_size + 3) - 1);
+  for (int i = 0; i < m; ++i) {
+    printf("|");
+    for (int j = 0; j < n; ++j) {
+      float res = layer->weight_updates[n * i + j];
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+        printf("%s |", FloatToString(num_size, res));
+      }
+    }
+    printf("\n");
+  }
+  PrintGridOutline(n * (num_size + 3) - 1);
 }
 
 char *GetLayerTypeStr(LayerType layer_type) {
