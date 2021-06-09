@@ -41,7 +41,6 @@ void UpdateLayer(Layer *layer, Network *net) {
   float beta_2 = net->beta_2;
   float momentum = net->momentum;
   float decay = net->decay;
-
   switch (net->opt_type) {
   case ADAM:
     AdamOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads, grad_cum_w,
@@ -186,11 +185,11 @@ void PrintWeight(Layer *layer) {
   PrintGridOutline(m * (num_size + 3) - 1);
 
   printf("weight :\n");
-  PrintGridOutline(n * (num_size + 3) - 1);
-  for (int i = 0; i < m; ++i) {
+  PrintGridOutline(m * (num_size + 3) - 1);
+  for (int i = 0; i < n; ++i) {
     printf("|");
-    for (int j = 0; j < n; ++j) {
-      float res = layer->weights[n * i + j];
+    for (int j = 0; j < m; ++j) {
+      float res = layer->weights[m * i + j];
       if (res >= 0) {
         printf(" %s |", FloatToString(num_size, res));
       } else {
@@ -199,7 +198,45 @@ void PrintWeight(Layer *layer) {
     }
     printf("\n");
   }
-  PrintGridOutline(n * (num_size + 3) - 1);
+  PrintGridOutline(m * (num_size + 3) - 1);
+}
+
+void PrintUpdate(Layer *layer) {
+  int num_size = 8;
+  int n = layer->input_size;
+  int m = layer->output_size;
+  int batch_size = layer->batch_size;
+  printf("layer %s update size = %d × %d + %d\n", layer->layer_name, n, m, m);
+
+  printf("bias update:\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+  printf("|");
+  for (int i = 0; i < m; ++i) {
+    float res = layer->bias_updates[i];
+    if (res >= 0) {
+      printf(" %s |", FloatToString(num_size, res));
+    } else {
+      printf("%s |", FloatToString(num_size, res));
+    }
+  }
+  printf("\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+
+  printf("weight update:\n");
+  PrintGridOutline(m * (num_size + 3) - 1);
+  for (int i = 0; i < n; ++i) {
+    printf("|");
+    for (int j = 0; j < m; ++j) {
+      float res = layer->weight_updates[m * i + j];
+      if (res >= 0) {
+        printf(" %s |", FloatToString(num_size, res));
+      } else {
+        printf("%s |", FloatToString(num_size, res));
+      }
+    }
+    printf("\n");
+  }
+  PrintGridOutline(m * (num_size + 3) - 1);
 }
 
 void PrintInput(Layer *layer, int batch_num) {
@@ -312,44 +349,6 @@ void PrintDelta(Layer *layer, int batch_num) {
     printf("|");
     for (int j = 0; j < n; ++j) {
       float res = layer->delta[n * i + j];
-      if (res >= 0) {
-        printf(" %s |", FloatToString(num_size, res));
-      } else {
-        printf("%s |", FloatToString(num_size, res));
-      }
-    }
-    printf("\n");
-  }
-  PrintGridOutline(n * (num_size + 3) - 1);
-}
-
-void PrintUpdate(Layer *layer) {
-  int num_size = 8;
-  int n = layer->input_size;
-  int m = layer->output_size;
-  int batch_size = layer->batch_size;
-  printf("layer %s update size = %d × %d + %d\n", layer->layer_name, n, m, m);
-
-  printf("bias update:\n");
-  PrintGridOutline(m * (num_size + 3) - 1);
-  printf("|");
-  for (int i = 0; i < m; ++i) {
-    float res = layer->bias_updates[i];
-    if (res >= 0) {
-      printf(" %s |", FloatToString(num_size, res));
-    } else {
-      printf("%s |", FloatToString(num_size, res));
-    }
-  }
-  printf("\n");
-  PrintGridOutline(m * (num_size + 3) - 1);
-
-  printf("weight update:\n");
-  PrintGridOutline(n * (num_size + 3) - 1);
-  for (int i = 0; i < m; ++i) {
-    printf("|");
-    for (int j = 0; j < n; ++j) {
-      float res = layer->weight_updates[n * i + j];
       if (res >= 0) {
         printf(" %s |", FloatToString(num_size, res));
       } else {

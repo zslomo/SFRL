@@ -5,6 +5,7 @@
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 // MSE 这里不求和
 void MeanSquareError(int n, float *pred, float *truth, float *loss) {

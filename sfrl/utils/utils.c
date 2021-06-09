@@ -83,3 +83,12 @@ char *FloatToString(int size, float num) {
   ret[size] = '\0';
   return ret;
 }
+
+void PrintTensor2D(float *Tensor, int n, int m) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      printf("%f ", Tensor[i * m + j]);
+    }
+    printf("\n");
+  }
+}

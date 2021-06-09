@@ -74,25 +74,24 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
     net->epoch = i + 1;
     for (int j = 0; j < batch_num - 1; ++j) {
       net->batch = j;
-      // printf("--------------- epoch %d, batch %d start -----------------\n", i, j);
+      printf("--------------------------- epoch %d, batch %d start --------------------------\n", i,
+             j);
       // 拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
-      // printf("batch %d get data done.---------------------------------------------------\n", j);
+      printf("batch %d get data done.\n", j);
       net->batch_trained_cnt += batch_size;
       ForwardNetwork(net);
       net->layers[2]->print_input(net->layers[2], 4);
+      // net->layers[2]->print_weight(net->layers[2]);
+      net->layers[2]->print_output(net->layers[2], 4);
       // net->layers[0]->print_grad(net->layers[0]);
-      // net->layers[0]->print_update(net->layers[0]);
-      net->layers[1]->print_delta(net->layers[1], 4);
-      
-      // printf("batch %d forward done.-----------------------------------------------------\n",
-      // j);
+      // printf("batch %d forward done.\n", j);
       BackWardNetwork(net);
-      // printf("batch %d backward done.-----------------------------------------------------\n",
-      // j);
+      net->layers[2]->print_delta(net->layers[2], 4);
+      // printf("batch %d backward done.\n", j);
       UpdateNetwork(net);
-      // printf("batch %d update done.-------------------------------------------------------\n",
-      // j);
+      // net->layers[2]->print_update(net->layers[2]);
+      // printf("batch %d update done.\n", j);
       sum += net->loss;
       // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
     }
@@ -158,6 +157,7 @@ void ForwardNetwork(Network *net) {
     net->active_layer_index = i;
     Layer *layer = net->layers[i];
     layer->ground_truth = net->ground_truth;
+     
     layer->forward(layer, net);
     net->input = layer->output;
   }

@@ -2,6 +2,7 @@
 #include "../activation/activation.h"
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
+#include "../utils/utils.h"
 #include "base_layer.h"
 #include <assert.h>
 #include <float.h>
@@ -24,11 +25,11 @@ DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiT
   layer.input = calloc(input_size * batch_size, sizeof(float));
   // w, b, delta
   layer.delta = calloc(batch_size * output_size, sizeof(float));
-  layer.weights = calloc(output_size * input_size, sizeof(float));
+  layer.weights = calloc(input_size * output_size, sizeof(float));
   layer.biases = calloc(output_size, sizeof(float));
   layer.weight_grads = calloc(input_size * output_size, sizeof(float));
   layer.bias_grads = calloc(output_size, sizeof(float));
-  layer.weight_updates = calloc(output_size * input_size, sizeof(float));
+  layer.weight_updates = calloc(input_size * output_size, sizeof(float));
   layer.bias_updates = calloc(output_size, sizeof(float));
   InitLayer(layer.weights, layer.biases, input_size, output_size, init_type);
 
@@ -54,20 +55,21 @@ void ForwardDenseLayer(DenseLayer *layer, Network *net) {
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
 
   /**
-   *  计算 intput × weights->T
-   *  维度是 M*K × K*N = M*N
-   *  A input M*K
-   *  B weights N*K
-   *  C output M*N
-   *  M batch_size A的行
-   *  N output_size B->T的列，就是B的行，ldc是 N
-   *  K input_size, A的列，所以 lda ldb也是 K
-   *  ALPHA 和 BETA这里都是1
+   *  计算 intput × weights
+   *  A input batch_size * input_size
+   *  B weights input_size * output_size
+   *  C output batch_size * output_size
+   *  M A 行  batch_size
+   *  N B 列  output_size
+   *  K A 列  input_size
+   *  lda input_size
+   *  ldb output_size
+   *  ldc output_size
    **/
   int TransA = 0;
-  int TransB = 1;
+  int TransB = 0;
   Gemm(TransA, TransB, net->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
-       layer->input_size, layer->weights, layer->input_size, layer->output, layer->output_size);
+       layer->input_size, layer->weights, layer->output_size, layer->output, layer->output_size);
 
   /**
     计算 + bias
@@ -97,37 +99,43 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
     CopyTensor(layer->output_size, layer->delta + i * layer->output_size, layer->bias_grads);
     // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
+
   /**
-   *  计算 当前层的weight_grads = delta.T × input
-   *  维度是 M*K × K*N = M*N
-   *  A delta N*M
-   *  B input K*N
-   *  C weight_grads M*N
-   *  M lda output_size A的列 A->T的行
-   *  N ldb ldc input_size, B的列
-   *  K batch_size, A的行 A->T的列
-   *  ALPHA 和 BETA这里都是1
+   *  计算 当前层的weight_grads = input.T × delta
+   *  A.T     input_size * batch_size
+   *  B delta batch_size * output_size
+   *  C grad  input_size * output_size
+   *  M A.T 行  input_size
+   *  N B 列    output_size
+   *  K A 列    batch_size
+   *  lda  batch_size
+   *  ldb  output_size
+   *  ldc  output_size
    **/
   int TransA = 1;
   int TransB = 0;
-  Gemm(TransA, TransB, layer->output_size, layer->input_size, net->batch_size, 1, 1, layer->delta,
-       layer->output_size, net->input, layer->input_size, layer->weight_grads, layer->input_size);
+  Gemm(TransA, TransB, layer->input_size, layer->output_size, net->batch_size, 1, 1, layer->input,
+       net->batch_size, layer->delta, layer->output_size, layer->weight_grads, layer->output_size);
+
   /**
    *  计算 后一层的delta，即net->delta
    *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
-   *  就可以直接用(f'(x) * delta)->T × input算出来了
-   *  net->delta = delta_tmp = delta × weights 维度是 M*K × K*N = M*N
-   *  A delta batch * output
-   *  B weights output * input
-   *  C net->delta batch * input
-   *  M batch_size A的行
-   *  N ldb ldc input_size, B的列
-   *  K lda output_size, A的列 B的行 ALPHA 和 BETA这里都是1
+   *  就可以直接用input.T × (f'(x) * delta)算出来了
+   *  A delta batch_size * output_size
+   *  B weights input_size * output_size
+   *  B.T       output_size * input_size
+   *  C net->delta batch_size * input_size
+   *  M A 行    batch_size
+   *  N B.T 列  input_size
+   *  K A 列    output_size
+   *  lda batch_size
+   *  ldb input_size
+   *  ldc input_size
    **/
-  // printf("M:%d, N:%d, K:%d\n", net->batch_size, layer->input_size, layer->output_size);
+
   if (net->delta) {
     int TransA = 0;
-    int TransB = 0;
+    int TransB = 1;
     Gemm(TransA, TransB, net->batch_size, layer->input_size, layer->output_size, 1, 1, layer->delta,
          layer->output_size, layer->weights, layer->input_size, net->delta, layer->input_size);
   }
