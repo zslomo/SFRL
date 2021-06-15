@@ -81,16 +81,20 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       printf("batch %d get data done.\n", j);
       net->batch_trained_cnt += batch_size;
       ForwardNetwork(net);
-      net->layers[2]->print_input(net->layers[2], 4);
-      // net->layers[2]->print_weight(net->layers[2]);
-      net->layers[2]->print_output(net->layers[2], 4);
-      // net->layers[0]->print_grad(net->layers[0]);
+      net->layers[0]->print_input(net->layers[0], 4);
+      // net->layers[0]->print_output(net->layers[0], 4);
+      // net->layers[2]->print_input(net->layers[2], 4);
+      // net->layers[2]->print_output(net->layers[2], 4);
       // printf("batch %d forward done.\n", j);
       BackWardNetwork(net);
-      net->layers[2]->print_delta(net->layers[2], 4);
+      net->layers[0]->print_grad(net->layers[0]);
+      // net->layers[2]->print_delta(net->layers[2], 4);
+      net->layers[0]->print_delta(net->layers[0], 4);
       // printf("batch %d backward done.\n", j);
+      // net->layers[0]->print_weight(net->layers[0]);
       UpdateNetwork(net);
-      // net->layers[2]->print_update(net->layers[2]);
+      // net->layers[0]->print_update(net->layers[0]);
+      // net->layers[0]->print_weight(net->layers[0]);
       // printf("batch %d update done.\n", j);
       sum += net->loss;
       // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
@@ -200,6 +204,9 @@ void UpdateNetwork(Network *net) {
     if (layer->update) {
       layer->update(layer, net);
     }
+    // 更新结束代表这层这次已经完成全部操作，重置，否则数据会累计, 比如梯度会累加计算,这就错了
+    // 动量和权重不会重置
+    layer->reset(layer);
   }
 }
 

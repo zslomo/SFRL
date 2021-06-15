@@ -22,7 +22,7 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
   // b = b - lr * (g + ρVt-1)
   AxpyTensor(b_size, -lr, grad_tmp_b, biases);
   CopyTensor(b_size, grad_tmp_b, b_updates);
-  // 动量更新
+  // 动量更新d
   CopyTensor(b_size, grad_tmp_b, grad_cum_b);
   free(grad_tmp_b);
 

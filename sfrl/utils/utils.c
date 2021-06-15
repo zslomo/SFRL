@@ -63,8 +63,8 @@ char *FloatToString(int size, float num) {
     size = len;
   }
   if (pow(10, size + 1) - 1 < num || -pow(10, size + 1) + 1 > num) {
-    char *s = calloc(size + 1, sizeof(char));
-    memset(s, 'A', size);
+    char *s = calloc(size + 2, sizeof(char));
+    memset(s, '0', size + 1);
     s[size] = '\0';
     return s;
   }

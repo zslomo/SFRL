@@ -134,20 +134,20 @@ void FreeLayer(Layer *layer) {
 }
 
 void ResetLayer(Layer *layer) {
-  if (layer->input) {
-    InitTensor(layer->input_size * layer->batch_size, 0, layer->input);
-  }
-  if (layer->output) {
-    InitTensor(layer->output_size * layer->batch_size, 0, layer->output);
-  }
+  // if (layer->input) {
+  //   InitTensor(layer->input_size * layer->batch_size, 0, layer->input);
+  // }
+  // if (layer->output) {
+  //   InitTensor(layer->batch_size * layer->output_size, 0, layer->output);
+  // }
   if (layer->delta) {
-    InitTensor(layer->output_size * layer->batch_size, 0, layer->delta);
+    InitTensor(layer->batch_size * layer->output_size, 0, layer->delta);
   }
   if (layer->weight_grads) {
-    InitTensor(layer->output_size * layer->input_size, 0, layer->output);
+    InitTensor(layer->input_size * layer->output_size, 0, layer->weight_grads);
   }
   if (layer->bias_grads) {
-    InitTensor(layer->output_size * layer->input_size, 0, layer->output);
+    InitTensor(layer->output_size, 0, layer->bias_grads);
   }
   if (layer->bn_gamma_grads) {
     InitTensor(layer->output_size, 0, layer->bn_gamma_grads);
@@ -321,11 +321,11 @@ void PrintGrad(Layer *layer) {
   PrintGridOutline(m * (num_size + 3) - 1);
 
   printf("weight grad:\n");
-  PrintGridOutline(n * (num_size + 3) - 1);
-  for (int i = 0; i < m; ++i) {
+  PrintGridOutline(m * (num_size + 3) - 1);
+  for (int i = 0; i < n; ++i) {
     printf("|");
-    for (int j = 0; j < n; ++j) {
-      float res = layer->weight_grads[n * i + j];
+    for (int j = 0; j < m; ++j) {
+      float res = layer->weight_grads[m * i + j];
       if (res >= 0) {
         printf(" %s |", FloatToString(num_size, res));
       } else {
@@ -335,7 +335,7 @@ void PrintGrad(Layer *layer) {
     }
     printf("\n");
   }
-  PrintGridOutline(n * (num_size + 3) - 1);
+  PrintGridOutline(m * (num_size + 3) - 1);
 }
 
 void PrintDelta(Layer *layer, int batch_num) {
