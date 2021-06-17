@@ -10,50 +10,47 @@
 #include <stdlib.h>
 #include <string.h>
 
-BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
+BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
                                   InitType init_type, char *layer_name) {
-  BatchNormLayer layer = {0};
-  layer.layer_type = BATCHNORMALIZATION;
-  layer.layer_name = layer_name;
-  layer.batch_size = batch_size;
-  layer.input_size = input_size;
   int output_size = input_size;
-  layer.output_size = output_size;
-
-  layer.input = calloc(input_size, sizeof(float));
-  layer.output = calloc(input_size, sizeof(float));
+  BatchNormLayer *layer = calloc(1, sizeof(BatchNormLayer));
+  
+  layer->layer_type = BATCHNORMALIZATION;
+  layer->layer_name = layer_name;
+  layer->batch_size = batch_size;
+  layer->input_size = input_size;
+  layer->output_size = output_size;
+  layer->input = calloc(input_size, sizeof(float));
+  layer->output = calloc(input_size, sizeof(float));
   // 这里的delta是上一层传承下来的
-  layer.delta = calloc(output_size * batch_size, sizeof(float));
+  layer->delta = calloc(output_size * batch_size, sizeof(float));
   /**
    *  bn 层有两个需要学习的参数，γ β，这里 β 其实可以复用bias，但是会造成代码阅读困难
    *  本身beta也没有多少空间占用，就还是给一个单独的参数了
    * */
-  layer.bn_gammas = calloc(output_size, sizeof(float));
-  layer.bn_gamma_grads = calloc(output_size, sizeof(float));
-  layer.bn_betas = calloc(output_size, sizeof(float));
-  layer.bn_beta_grads = calloc(output_size, sizeof(float));
+  layer->bn_gammas = calloc(output_size, sizeof(float));
+  layer->bn_gamma_grads = calloc(output_size, sizeof(float));
+  layer->bn_betas = calloc(output_size, sizeof(float));
+  layer->bn_beta_grads = calloc(output_size, sizeof(float));
 
   for (int i = 0; i < output_size; ++i) {
-    layer.bn_gammas[i] = 1;
+    layer->bn_gammas[i] = 1;
   }
 
-  layer.mean = calloc(output_size, sizeof(float));
-  layer.mean_delta = calloc(output_size, sizeof(float));
-  layer.variance = calloc(output_size, sizeof(float));
-  layer.variance_delta = calloc(output_size, sizeof(float));
-
-  layer.rolling_mean = calloc(output_size, sizeof(float));
-  layer.rolling_variance = calloc(output_size, sizeof(float));
-
-  layer.output_normed = calloc(batch_size * output_size, sizeof(float));
-  layer.output_before_norm = calloc(batch_size * output_size, sizeof(float));
-
-  layer.forward = ForwardBatchNormLayer;
-  layer.backward = BackwardBatchNormLayer;
-  layer.print_input = PrintInput;
-  layer.print_output = PrintOutput;
-  layer.print_delta = PrintDelta;
-  layer.reset = ResetLayer;
+  layer->mean = calloc(output_size, sizeof(float));
+  layer->mean_delta = calloc(output_size, sizeof(float));
+  layer->variance = calloc(output_size, sizeof(float));
+  layer->variance_delta = calloc(output_size, sizeof(float));
+  layer->rolling_mean = calloc(output_size, sizeof(float));
+  layer->rolling_variance = calloc(output_size, sizeof(float));
+  layer->output_normed = calloc(batch_size * output_size, sizeof(float));
+  layer->output_before_norm = calloc(batch_size * output_size, sizeof(float));
+  layer->forward = ForwardBatchNormLayer;
+  layer->backward = BackwardBatchNormLayer;
+  layer->print_input = PrintInput;
+  layer->print_output = PrintOutput;
+  layer->print_delta = PrintDelta;
+  layer->reset = ResetLayer;
 
   return layer;
 }

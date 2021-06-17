@@ -8,23 +8,23 @@
 #include "../utils/blas.h"
 #include "softmax_layer.h"
 
-SoftmaxLayer MakeSoftmaxLayer(int batch_size, int input_size, char *layer_name) {
-  SoftmaxLayer layer = {0};
-  layer.layer_type = SOFTMAX;
-  layer.batch_size = batch_size;
-  layer.input_size = input_size; // softmax_layer的输入输出元素相同 其实就是类别个数
-  layer.output_size = input_size;
-  layer.layer_name = layer_name;
-  layer.input = calloc(input_size * batch_size, sizeof(float));
-  layer.output = calloc(input_size * batch_size, sizeof(float));
-  layer.delta = calloc(input_size * batch_size, sizeof(float));
-  layer.temperature = 1.0;
-  layer.forward = ForwardSoftmaxLayer;
-  layer.backward = BackwardSoftmaxLayer;
-  layer.print_input = PrintInput;
-  layer.print_output = PrintOutput;
-  layer.print_delta = PrintDelta;
-  layer.reset = ResetLayer;
+SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size, char *layer_name) {
+  SoftmaxLayer *layer = calloc(1, sizeof(SoftmaxLayer));
+  layer->layer_type = SOFTMAX;
+  layer->batch_size = batch_size;
+  layer->input_size = input_size; // softmax_layer的输入输出元素相同 其实就是类别个数
+  layer->output_size = input_size;
+  layer->layer_name = layer_name;
+  layer->input = calloc(input_size * batch_size, sizeof(float));
+  layer->output = calloc(input_size * batch_size, sizeof(float));
+  layer->delta = calloc(input_size * batch_size, sizeof(float));
+  layer->temperature = 1.0;
+  layer->forward = ForwardSoftmaxLayer;
+  layer->backward = BackwardSoftmaxLayer;
+  layer->print_input = PrintInput;
+  layer->print_output = PrintOutput;
+  layer->print_delta = PrintDelta;
+  layer->reset = ResetLayer;
 
   return layer;
 }

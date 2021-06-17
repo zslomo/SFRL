@@ -64,28 +64,27 @@ int ReadData(char *filename, char **samples) {
 }
 
 int BuildNet(Data *data, Network *net) {
-  int batch_size = 4;
-  DenseLayer dnn_1 = MakeDenseLayer(batch_size, data->sample_size, 4, TANH, NORMAL, "dense_1");
-  // DenseLayer dnn_2 = MakeDenseLayer(batch_size, 2, 2, TANH, NORMAL, "dense_2");
-  SoftmaxLayer sm_1 = MakeSoftmaxLayer(batch_size, 2, "softmax");
-  LossLayer loss_layer = MakeLossLayer(batch_size, 2, 2, CE, "loss");
-
-  net->batch_size = batch_size;
+  DenseLayer *dnn_1 = MakeDenseLayer(net->batch_size, data->sample_size, 4, TANH, NORMAL, "dense_1");
+  // DenseLayer dnn_2 = MakeDenseLayer(batch_size, 16, 2, TANH, NORMAL, "dense_2");
+  SoftmaxLayer *sm = MakeSoftmaxLayer(net->batch_size, 2, "softmax");
+  LossLayer *ll = MakeLossLayer(net->batch_size, 2, 2, CE, "loss");
   net->sample_size = data->sample_size;
-  net->layers[0] = &dnn_1;
+  net->layers[0] = dnn_1;
   // net->layers[1] = &dnn_2;
-  net->layers[1] = &sm_1;
-  net->layers[2] = &loss_layer;
-  printf("start train...\n");
-  net->learning_rate = 0.1;
-  net->train(net, data, SGD, 10);
+  net->layers[1] = sm;
+  net->layers[2] = ll;
 }
 int main(int argc, char **argv) {
   printf("Read data...\n");
   char **samples = malloc(255 * sizeof(char *));
   int sample_num = ReadData("../data/iris/iris.data", samples);
+  int batch_size = 16;
   printf("get sample done...\n");
-  Data data = BuildInput(samples, 16, sample_num, 4);
-  Network net = MakeNetwork(3);
-  BuildNet(&data, &net);
+  Data data = BuildInput(samples, batch_size, sample_num, 4);
+  Network *net = MakeNetwork(3, batch_size);
+  printf("make network done..\n");
+  BuildNet(&data, net);
+  printf("start train...\n");
+  net->learning_rate = 0.1;
+  net->train(net, &data, SGD, 10);
 }

@@ -65,6 +65,7 @@ char *GetActivationTypeStr(ActiType acti_type) {
   } else if (acti_type == TANH) {
     acti_type_str = "tanh";
   } else {
+    printf("error tpye = %d\n", acti_type);
     acti_type_str = "error";
   }
   return acti_type_str;

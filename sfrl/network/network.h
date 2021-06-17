@@ -48,9 +48,10 @@ struct Network {
   float (*train)(struct Network *, struct Data *, OptType, int);
   float (*test)(struct Network *, struct Data *);
   void (*reset)(struct Network *);
+  void (*print)(struct Network *);
 };
 
-Network MakeNetwork(int n);
+Network *MakeNetwork(int n, int batch_size);
 void FreeNetwork(Network *net);
 void ForwardNetwork(Network *net);
 void BackWardNetwork(Network *net);
@@ -58,7 +59,7 @@ void UpdateNetwork(Network *net);
 void GetNextBatchData(Data *data, Network *net, int sample_num, int offset);
 float Train(Network *net, Data *data, OptType opt_type, int epoches);
 float Test(Network *net, Data *data);
-void PrintNetwork(Network net);
+void PrintNetwork(Network *net);
 void ResetNetwork(Network *net);
 
 #endif

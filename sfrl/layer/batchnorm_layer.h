@@ -13,7 +13,7 @@
  * */
 typedef Layer BatchNormLayer;
 
-BatchNormLayer MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
+BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, ActiType acti_type,
                                   InitType init_type, char *layer_name);
 void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net);
 void BackwardBatchNormLayer(BatchNormLayer *layer, Network *net);

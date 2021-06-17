@@ -13,32 +13,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-Network MakeNetwork(int n) {
-  Network net = {0};
-  net.layer_depth = n;
-  net.layers = calloc(net.layer_depth, sizeof(Layer *));
+Network *MakeNetwork(int n, int batch_size) {
+  Network *net = calloc(1, sizeof(Network));
+  net->layer_depth = n;
+  net->layers = calloc(net->layer_depth, sizeof(Layer *));
   // 默认优化参数
-  net.learning_rate = 0.01;
-  net.momentum = 0.9;
-  net.decay = 0.1;
-  net.gamma = 0.9;
-  net.beta_1 = 0.9;
-  net.beta_2 = 0.999;
-  net.eps = 1e-8;
-  net.train = Train;
-  net.test = Test;
-  net.reset = ResetNetwork;
-
+  net->learning_rate = 0.1;
+  net->momentum = 0.9;
+  net->decay = 0.1;
+  net->gamma = 0.9;
+  net->beta_1 = 0.9;
+  net->beta_2 = 0.999;
+  net->eps = 1e-8;
+  net->batch_size = batch_size;
+  net->train = Train;
+  net->test = Test;
+  net->reset = ResetNetwork;
+  net->print = PrintNetwork;
   return net;
 }
 
-void PrintNetwork(Network net) {
+void PrintNetwork(Network *net) {
   printf("net work args:\n");
-  printf("batch size: %d\n", net.batch_size);
-  printf("net depth : %d\n", net.layer_depth);
+  printf("batch size: %d\n", net->batch_size);
+  printf("net depth : %d\n", net->layer_depth);
   int all_weight_num = 0;
-  for (int i = 0; i < net.layer_depth - 1; ++i) {
-    Layer *layer = net.layers[i];
+  for (int i = 0; i < net->layer_depth; ++i) {
+    Layer *layer = net->layers[i];
     char *layer_type_str = GetLayerTypeStr(layer->layer_type);
     char *acti_type_str = GetActivationTypeStr(layer->acti_type);
     int input_size = layer->input_size;
@@ -52,18 +53,18 @@ void PrintNetwork(Network net) {
       printf("-- %s\n", layer_type_str);
     }
   }
-  char *loss_str = GetLossStr(net.layers[net.layer_depth - 1]->loss_type);
-  char *opt_str = GetOptimizerStr(net.opt_type);
+  char *loss_str = GetLossStr(net->layers[net->layer_depth - 1]->loss_type);
+  char *opt_str = GetOptimizerStr(net->opt_type);
   printf("-- loss: %s, optimizer: %s, all weight num: %d\n", loss_str, opt_str, all_weight_num);
 }
 
 float Train(Network *net, Data *data, OptType opt_type, int epoches) {
-  printf("epoches = %f\n", epoches);
+  printf("epoches = %d\n", epoches);
   int batch_size = net->batch_size;
   int batch_num = data->sample_num / batch_size;
   net->mode = TRAIN;
   net->opt_type = opt_type;
-  PrintNetwork(*net);
+  net->print(net);
   net->input_size = batch_size * data->sample_size;
   net->origin_input = malloc(net->input_size * sizeof(float));
   net->ground_truth = malloc(batch_size * sizeof(float));
@@ -81,19 +82,19 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       printf("batch %d get data done.\n", j);
       net->batch_trained_cnt += batch_size;
       ForwardNetwork(net);
-      net->layers[0]->print_input(net->layers[0], 4);
-      // net->layers[0]->print_output(net->layers[0], 4);
-      // net->layers[2]->print_input(net->layers[2], 4);
-      // net->layers[2]->print_output(net->layers[2], 4);
+      // net->layers[0]->print_input(net->layers[0], 16);
+      // net->layers[0]->print_output(net->layers[0], 16);
+      net->layers[2]->print_input(net->layers[2], 16);
+      // net->layers[3]->print_output(net->layers[3], 16);
       // printf("batch %d forward done.\n", j);
       BackWardNetwork(net);
-      net->layers[0]->print_grad(net->layers[0]);
-      // net->layers[2]->print_delta(net->layers[2], 4);
-      net->layers[0]->print_delta(net->layers[0], 4);
+      // net->layers[0]->print_grad(net->layers[0]);
+      net->layers[2]->print_delta(net->layers[2], 4);
+      // net->layers[0]->print_delta(net->layers[0], 16);
       // printf("batch %d backward done.\n", j);
       // net->layers[0]->print_weight(net->layers[0]);
       UpdateNetwork(net);
-      // net->layers[0]->print_update(net->layers[0]);
+      net->layers[0]->print_update(net->layers[0]);
       // net->layers[0]->print_weight(net->layers[0]);
       // printf("batch %d update done.\n", j);
       sum += net->loss;
@@ -161,7 +162,6 @@ void ForwardNetwork(Network *net) {
     net->active_layer_index = i;
     Layer *layer = net->layers[i];
     layer->ground_truth = net->ground_truth;
-     
     layer->forward(layer, net);
     net->input = layer->output;
   }

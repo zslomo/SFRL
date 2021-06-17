@@ -62,13 +62,21 @@ char *FloatToString(int size, float num) {
   if (size == 0) {
     size = len;
   }
-  if (pow(10, size + 1) - 1 < num || -pow(10, size + 1) + 1 > num) {
-    char *s = calloc(size + 2, sizeof(char));
-    memset(s, '0', size + 1);
+
+  if (pow(10, size + 1) - 1 < num) {
+    char *s = calloc(size + 1, sizeof(char));
+    memset(s, 'A', size);
     s[size] = '\0';
     return s;
   }
 
+  if (-pow(10, size + 1) + 1 > num) {
+    char *s = calloc(size + 2, sizeof(char));
+    s[0] = ' ';
+    memset(s + 1, 'A', size);
+    s[size + 1] = '\0';
+    return s;
+  }
   if (num < 0) {
     size++;
   }

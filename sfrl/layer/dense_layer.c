@@ -11,38 +11,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-DenseLayer MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
+DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
                           InitType init_type, char *layer_name) {
-  DenseLayer layer = {0};
-  layer.layer_type = DENSE;
-  layer.layer_name = layer_name;
-  layer.batch_size = batch_size;
-  layer.input_size = input_size;
-  layer.output_size = output_size;
-  layer.acti_type = acti_type;
+  DenseLayer *layer = calloc(1, sizeof(DenseLayer));
+  layer->layer_type = DENSE;
+  layer->layer_name = layer_name;
+  layer->batch_size = batch_size;
+  layer->input_size = input_size;
+  layer->output_size = output_size;
+  layer->acti_type = acti_type;
 
-  layer.output = calloc(output_size * batch_size, sizeof(float));
-  layer.input = calloc(input_size * batch_size, sizeof(float));
+  layer->output = calloc(output_size * batch_size, sizeof(float));
+  layer->input = calloc(input_size * batch_size, sizeof(float));
   // w, b, delta
-  layer.delta = calloc(batch_size * output_size, sizeof(float));
-  layer.weights = calloc(input_size * output_size, sizeof(float));
-  layer.biases = calloc(output_size, sizeof(float));
-  layer.weight_grads = calloc(input_size * output_size, sizeof(float));
-  layer.bias_grads = calloc(output_size, sizeof(float));
-  layer.weight_updates = calloc(input_size * output_size, sizeof(float));
-  layer.bias_updates = calloc(output_size, sizeof(float));
-  InitLayer(layer.weights, layer.biases, input_size, output_size, init_type);
+  layer->delta = calloc(batch_size * output_size, sizeof(float));
+  layer->weights = calloc(input_size * output_size, sizeof(float));
+  layer->biases = calloc(output_size, sizeof(float));
+  layer->weight_grads = calloc(input_size * output_size, sizeof(float));
+  layer->bias_grads = calloc(output_size, sizeof(float));
+  layer->weight_updates = calloc(input_size * output_size, sizeof(float));
+  layer->bias_updates = calloc(output_size, sizeof(float));
+  InitLayer(layer->weights, layer->biases, input_size, output_size, init_type);
 
-  layer.forward = ForwardDenseLayer;
-  layer.backward = BackwardDenseLayer;
-  layer.update = UpdateDenseLayer;
-  layer.print_input = PrintInput;
-  layer.print_output = PrintOutput;
-  layer.print_weight = PrintWeight;
-  layer.print_grad = PrintGrad;
-  layer.print_delta = PrintDelta;
-  layer.print_update = PrintUpdate;
-  layer.reset = ResetLayer;
+  layer->forward = ForwardDenseLayer;
+  layer->backward = BackwardDenseLayer;
+  layer->update = UpdateDenseLayer;
+  layer->print_input = PrintInput;
+  layer->print_output = PrintOutput;
+  layer->print_weight = PrintWeight;
+  layer->print_grad = PrintGrad;
+  layer->print_delta = PrintDelta;
+  layer->print_update = PrintUpdate;
+  layer->reset = ResetLayer;
 
   return layer;
 }
@@ -53,7 +53,6 @@ void ForwardDenseLayer(DenseLayer *layer, Network *net) {
   CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
   int output_tensor_size = layer->output_size * net->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
-
   /**
    *  计算 intput × weights
    *  A input batch_size * input_size
@@ -108,15 +107,15 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  M A.T 行  input_size
    *  N B 列    output_size
    *  K A 列    batch_size
-   *  lda  batch_size
+   *  lda  input_size
    *  ldb  output_size
    *  ldc  output_size
    **/
   int TransA = 1;
   int TransB = 0;
-  Gemm(TransA, TransB, layer->input_size, layer->output_size, net->batch_size, 1, 1, layer->input,
-       net->batch_size, layer->delta, layer->output_size, layer->weight_grads, layer->output_size);
 
+  Gemm(TransA, TransB, layer->input_size, layer->output_size, net->batch_size, 1, 1, layer->input,
+       layer->input_size, layer->delta, layer->output_size, layer->weight_grads, layer->output_size);
   /**
    *  计算 后一层的delta，即net->delta
    *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
@@ -128,8 +127,8 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  M A 行    batch_size
    *  N B.T 列  input_size
    *  K A 列    output_size
-   *  lda batch_size
-   *  ldb input_size
+   *  lda output_size
+   *  ldb output_size
    *  ldc input_size
    **/
 
@@ -137,6 +136,6 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
     int TransA = 0;
     int TransB = 1;
     Gemm(TransA, TransB, net->batch_size, layer->input_size, layer->output_size, 1, 1, layer->delta,
-         layer->output_size, layer->weights, layer->input_size, net->delta, layer->input_size);
+         layer->output_size, layer->weights, layer->output_size, net->delta, layer->input_size);
   }
 }
