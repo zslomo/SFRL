@@ -21,12 +21,13 @@ typedef struct Data {
   // 每个样本的数据占多大
   // 其实就是看有几个维度就吧对应的dn连成起来
   int sample_size;
+  int class_num;
   void (*free_data)(struct Data *);
   void (*print_data)(struct Data *);
   void (*normalize_data)(struct Data *);
 } Data;
 
-Data MakeData(int dims, int sample_size, int sample_num);
+Data *MakeData(int dims, int sample_size, int sample_num);
 void FreeData(Data *data);
 void PrintData(Data *data);
 void NormalizeData(Data *data);

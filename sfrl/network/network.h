@@ -8,6 +8,7 @@
 #include "../data/data.h"
 
 typedef enum { TRAIN, TEST } NetMode;
+typedef enum { ADAM, SGD, ADAGRAD, RMSPROP } OptType;
 
 struct Network {
   Layer **layers;
@@ -22,13 +23,15 @@ struct Network {
   // 输入输出
   float *origin_input; // 这里维护的是整个网络的输入
   float *input;  // 这里的输入维护的是当前层的输入，也就是上一层的输出
-  float *output; // 这里维护的是整个网络的输出
+  float *output;
+  float *pred;
   float *ground_truth; // 标签
   int input_size;
   int output_size;
   int batch_size;
   int sample_size; // 单个样本的size
   int input_processed_num; // 已经处理过的输入样本数量
+  
 
   // 反向传播
   float *delta; // 注意这里, net->delta 只是指向反向传播时需要层的delta

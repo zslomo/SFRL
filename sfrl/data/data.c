@@ -4,15 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Data MakeData(int dims, int sample_size, int sample_num){
-  Data data = {0};
-  data.dims = dims;
-  data.sample_size = sample_size;
-  data.sample_num = sample_num;
-
-  data.print_data = PrintData;
-  data.normalize_data = NormalizeData;
-  data.free_data = FreeData;
+Data *MakeData(int dims, int sample_size, int sample_num){
+  Data *data = calloc(1, sizeof(Data));
+  data->dims = dims;
+  data->sample_size = sample_size;
+  data->sample_num = sample_num;
+  data->print_data = PrintData;
+  data->normalize_data = NormalizeData;
+  data->free_data = FreeData;
 
   return data;
 }

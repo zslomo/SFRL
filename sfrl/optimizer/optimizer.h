@@ -1,25 +1,15 @@
 #ifndef OPTIMIZER_H
 #define OPTIMIZER_H
+#include "../layer/base_layer.h"
+#include "../network/network.h"
 /**
  * 优化方法
  * 这里讲的非常详细 https://d2l.ai/chapter_optimization/sgd.html
  **/
-typedef enum { ADAM, SGD, ADAGRAD, RMSPROP } OptType;
 
-void SgdOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                  float *biases, float *bias_grads, float *grad_cum_w, float *grad_cum_b, float lr,
-                  float momentum, float *w_updates, float *b_updates);
-void AdaGradOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                      float *biases, float *bias_grads, float *grad_cum_square_w,
-                      float *grad_cum_square_b, float lr, float *w_updates, float *b_updates);
-void RmsPropOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                      float *biases, float *bias_grads, float *grad_cum_square_w,
-                      float *grad_cum_square_b, float lr, float decay, float *w_updates,
-                      float *b_updates);
-void AdamOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                   float *biases, float *bias_grads, float *grad_cum_w, float *grad_cum_square_w,
-                   float *grad_cum_b, float *grad_cum_square_b, float lr, float beta_1,
-                   float beta_2, float *w_updates, float *b_updates);
-char *GetOptimizerStr(OptType opt_type);
+void SgdOptimizer(Network *net, Layer *layer);
+void AdaGradOptimizer(Network *net, Layer *layer);
+void RmsPropOptimizer(Network *net, Layer *layer);
+void AdamOptimizer(Network *net, Layer *layer);
 
 #endif

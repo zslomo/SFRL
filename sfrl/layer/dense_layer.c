@@ -12,7 +12,7 @@
 #include <string.h>
 
 DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
-                          InitType init_type, char *layer_name) {
+                          InitType init_type, int seed, char *layer_name) {
   DenseLayer *layer = calloc(1, sizeof(DenseLayer));
   layer->layer_type = DENSE;
   layer->layer_name = layer_name;
@@ -31,7 +31,7 @@ DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, Acti
   layer->bias_grads = calloc(output_size, sizeof(float));
   layer->weight_updates = calloc(input_size * output_size, sizeof(float));
   layer->bias_updates = calloc(output_size, sizeof(float));
-  InitLayer(layer->weights, layer->biases, input_size, output_size, init_type);
+  InitLayer(layer->weights, layer->biases, input_size, output_size, init_type, seed);
 
   layer->forward = ForwardDenseLayer;
   layer->backward = BackwardDenseLayer;

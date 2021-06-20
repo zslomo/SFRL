@@ -18,27 +18,30 @@
 #include "../sfrl/optimizer/optimizer.h"
 #include "../sfrl/utils/blas.h"
 
-Data BuildInput(char **samples, int batch_size, int sample_num, int sample_size) {
-  Data data = MakeData(2, sample_size, sample_num);
-  data.X = calloc(sample_size * data.sample_num, sizeof(float));
-  data.Y = calloc(sample_num, sizeof(float));
-  // printf("size = %d \n", data.sample_num);
+Data *BuildInput(char **samples, int batch_size, int sample_num, int sample_size) {
+  Data *data = MakeData(2, sample_size, sample_num);
+  data->X = calloc(sample_size * data->sample_num, sizeof(float));
+  data->Y = calloc(sample_num, sizeof(float));
+  // printf("size = %d \n", data->sample_num);
   // printf("sample : %s \n", samples[9]);
   for (int i = 0; i < sample_num; ++i) {
     // printf("line %d: %s\n", i, samples[i]);
     char **tokens = StrSplit(samples[i], ",");
     for (int j = 0; j < sample_size; ++j) {
-      data.X[i * sample_size + j] = atof(tokens[j]);
+      data->X[i * sample_size + j] = atof(tokens[j]);
     }
-    if (strcmp(tokens[sample_size], "Iris-setosa")) {
-      data.Y[i] = 0;
+    if (!strcmp(tokens[sample_size], "Iris-setosa")) {
+      data->Y[i] = 0;
+    } else if (!strcmp(tokens[sample_size], "Iris-versicolor")) {
+      data->Y[i] = 1;
     } else {
-      data.Y[i] = 1;
+      data->Y[i] = 2;
     }
   }
-  // data.normalize_data(&data);
-  int batch_num = data.sample_num / batch_size;
-  int last_batch_size = data.sample_num % batch_size;
+  data->class_num = 3;
+  // data->normalize_data(data);
+  int batch_num = data->sample_num / batch_size;
+  int last_batch_size = data->sample_num % batch_size;
   // PrintData(&data);
   return data;
 }
@@ -64,27 +67,30 @@ int ReadData(char *filename, char **samples) {
 }
 
 int BuildNet(Data *data, Network *net) {
-  DenseLayer *dnn_1 = MakeDenseLayer(net->batch_size, data->sample_size, 4, TANH, NORMAL, "dense_1");
-  // DenseLayer dnn_2 = MakeDenseLayer(batch_size, 16, 2, TANH, NORMAL, "dense_2");
-  SoftmaxLayer *sm = MakeSoftmaxLayer(net->batch_size, 2, "softmax");
-  LossLayer *ll = MakeLossLayer(net->batch_size, 2, 2, CE, "loss");
+  int class_num = 3;
+  int seed = 1024;
+  DenseLayer *dnn_1 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 3, LINEAR, NORMAL, seed, "dense_1");
+  SoftmaxLayer *sm = MakeSoftmaxLayer(net->batch_size, class_num, "softmax");
+  LossLayer *ll = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
   net->sample_size = data->sample_size;
   net->layers[0] = dnn_1;
-  // net->layers[1] = &dnn_2;
   net->layers[1] = sm;
   net->layers[2] = ll;
+  net->pred = calloc(net->batch_size * class_num, sizeof(float));
 }
 int main(int argc, char **argv) {
   printf("Read data...\n");
   char **samples = malloc(255 * sizeof(char *));
   int sample_num = ReadData("../data/iris/iris.data", samples);
-  int batch_size = 16;
+  int batch_size = 150;
   printf("get sample done...\n");
-  Data data = BuildInput(samples, batch_size, sample_num, 4);
-  Network *net = MakeNetwork(3, batch_size);
+  Data *data = BuildInput(samples, batch_size, sample_num, 4);
+  Network *net = MakeNetwork(data->class_num, batch_size);
   printf("make network done..\n");
-  BuildNet(&data, net);
+  BuildNet(data, net);
   printf("start train...\n");
   net->learning_rate = 0.1;
-  net->train(net, &data, SGD, 10);
+  net->train(net, data, SGD, 100);
+  net->test(net, data);
 }

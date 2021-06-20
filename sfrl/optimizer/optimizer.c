@@ -1,17 +1,30 @@
 #include "optimizer.h"
-#include "../utils/blas.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include "../utils/blas.h"
 
-void SgdOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                  float *biases, float *bias_grads, float *grad_cum_w, float *grad_cum_b, float lr,
-                  float momentum, float *w_updates, float *b_updates) {
+void SgdOptimizer(Network *net, Layer *layer) {
+  int input_size = layer->input_size;
+  int output_size = layer->output_size;
+  int batch_size = net->batch_size;
   int w_size = input_size * output_size;
   int b_size = output_size;
+  float *weights = layer->weights;
+  float *weight_grads = layer->weight_grads;
+  float *biases = layer->biases;
+  float *bias_grads = layer->bias_grads;
+  float *w_updates = layer->weight_updates;
+  float *b_updates = layer->bias_updates;
+  float *grad_cum_b = layer->grad_cum_b;
+  float *grad_cum_w = layer->grad_cum_w;
+  float lr = net->learning_rate;
+  float momentum = net->momentum;
+  float decay = net->decay;
+
   // bias
   float *grad_tmp_b = calloc(b_size, sizeof(float));
   CopyTensor(b_size, grad_cum_b, grad_tmp_b);
@@ -20,8 +33,8 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
   // g + ρVt-1
   AxpyTensor(b_size, 1, bias_grads, grad_tmp_b);
   // b = b - lr * (g + ρVt-1)
-  AxpyTensor(b_size, -lr, grad_tmp_b, biases);
-  CopyTensor(b_size, grad_tmp_b, b_updates);
+  AxpyTensor(b_size, -lr / batch_size, grad_tmp_b, biases);
+  AxpyTensor(b_size, -lr / batch_size, grad_tmp_b, b_updates);
   // 动量更新d
   CopyTensor(b_size, grad_tmp_b, grad_cum_b);
   free(grad_tmp_b);
@@ -34,18 +47,34 @@ void SgdOptimizer(int input_size, int output_size, float *weights, float *weight
   // g + ρVt-1
   AxpyTensor(w_size, 1, weight_grads, grad_tmp_w);
   // w = w - lr * (g + ρVt-1)
-  AxpyTensor(w_size, -lr, grad_tmp_w, weights);
-  CopyTensor(w_size, grad_tmp_w, w_updates);
+  AxpyTensor(w_size, -lr / batch_size, grad_tmp_w, weights);
+  AxpyTensor(w_size, -lr / batch_size, grad_tmp_w, w_updates);
   // 动量更新
   CopyTensor(w_size, grad_tmp_w, grad_cum_w);
   free(grad_tmp_w);
 }
 
-void AdaGradOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                      float *biases, float *bias_grads, float *grad_cum_square_w,
-                      float *grad_cum_square_b, float lr, float *w_updates, float *b_updates) {
+void AdaGradOptimizer(Network *net, Layer *layer) {
+  int input_size = layer->input_size;
+  int output_size = layer->output_size;
+  int batch_size = net->batch_size;
   int w_size = input_size * output_size;
   int b_size = output_size;
+  float *weights = layer->weights;
+  float *weight_grads = layer->weight_grads;
+  float *biases = layer->biases;
+  float *bias_grads = layer->bias_grads;
+  float *w_updates = layer->weight_updates;
+  float *b_updates = layer->bias_updates;
+  float *grad_cum_b = layer->grad_cum_b;
+  float *grad_cum_w = layer->grad_cum_w;
+  float *grad_cum_square_b = layer->grad_cum_square_b;
+  float *grad_cum_square_w = layer->grad_cum_square_w;
+  float lr = net->learning_rate;
+  float beta_1 = net->beta_1;
+  float beta_2 = net->beta_2;
+  float momentum = net->momentum;
+  float decay = net->decay;
 
   float eps = 1e-4;
 
@@ -69,27 +98,43 @@ void AdaGradOptimizer(int input_size, int output_size, float *weights, float *we
   // bias
   float *increment_tmp_b = calloc(b_size, sizeof(float));
   DivTensor(b_size, eps, 1, grad_cum_square_b, increment_tmp_b);
-  CopyTensor(b_size, grad_cum_square_b, b_updates);
-  AxpyTensor(b_size, -lr, increment_tmp_b, biases);
+  AxpyTensor(b_size, -lr / batch_size, increment_tmp_b, biases);
+  AxpyTensor(b_size, -lr / batch_size, increment_tmp_b, b_updates);
   free(increment_tmp_b);
   // weight
   float *increment_tmp_w = calloc(w_size, sizeof(float));
   DivTensor(w_size, eps, 1, grad_cum_square_w, increment_tmp_w);
-  CopyTensor(w_size, increment_tmp_w, w_updates);
-  AxpyTensor(w_size, -lr, increment_tmp_w, weights);
+  AxpyTensor(w_size, -lr / batch_size, increment_tmp_w, weights);
+  AxpyTensor(w_size, -lr / batch_size, increment_tmp_w, w_updates);
   free(increment_tmp_w);
 }
 
-void RmsPropOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                      float *biases, float *bias_grads, float *grad_cum_square_w,
-                      float *grad_cum_square_b, float lr, float decay, float *w_updates,
-                      float *b_updates) {
+void RmsPropOptimizer(Network *net, Layer *layer) {
+  int input_size = layer->input_size;
+  int output_size = layer->output_size;
+  int batch_size = net->batch_size;
   int w_size = input_size * output_size;
   int b_size = output_size;
+  float *weights = layer->weights;
+  float *weight_grads = layer->weight_grads;
+  float *biases = layer->biases;
+  float *bias_grads = layer->bias_grads;
+  float *w_updates = layer->weight_updates;
+  float *b_updates = layer->bias_updates;
+  float *grad_cum_b = layer->grad_cum_b;
+  float *grad_cum_w = layer->grad_cum_w;
+  float *grad_cum_square_b = layer->grad_cum_square_b;
+  float *grad_cum_square_w = layer->grad_cum_square_w;
+  float lr = net->learning_rate;
+  float beta_1 = net->beta_1;
+  float beta_2 = net->beta_2;
+  float momentum = net->momentum;
+  float decay = net->decay;
   /**
-   *  Rmsprop 中存在一个1/r 的对梯度的衰减，r是累计平方梯度，当激活函数是relu的时候
-   *  梯读会出现大量的0(输入为负梯度就是0) 那么 1/r 就会爆炸，所以这里eps不宜设置过大
-   *  否则 衰减系数太大，不容易收敛
+   *  Rmsprop 中存在一个1/r
+   * 的对梯度的衰减，r是累计平方梯度，当激活函数是relu的时候
+   *  梯读会出现大量的0(输入为负梯度就是0) 那么 1/r
+   * 就会爆炸，所以这里eps不宜设置过大 否则 衰减系数太大，不容易收敛
    * */
   float eps = 1e-4;
 
@@ -128,8 +173,8 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   // 1 / sqrt(r + eps)
   DivTensor(b_size, eps, 1, increment_tmp_b, increment_tmp_b);
   // b - lr * 1 / sqrt(r + eps)
-  AxpyTensor(b_size, -lr, increment_tmp_b, biases);
-  CopyTensor(b_size, increment_tmp_b, b_updates);
+  AxpyTensor(b_size, -lr / batch_size, increment_tmp_b, biases);
+  AxpyTensor(b_size, -lr / batch_size, increment_tmp_b, b_updates);
   free(increment_tmp_b);
 
   // weight
@@ -137,17 +182,32 @@ void RmsPropOptimizer(int input_size, int output_size, float *weights, float *we
   AxpyTensor(w_size, eps, grad_cum_square_w, increment_tmp_w);
   SqrtTensor(w_size, increment_tmp_w, increment_tmp_w);
   DivTensor(w_size, eps, 1, increment_tmp_w, increment_tmp_w);
-  AxpyTensor(w_size, -lr, increment_tmp_w, weights);
-  CopyTensor(w_size, increment_tmp_w, w_updates);
+  AxpyTensor(w_size, -lr / batch_size, increment_tmp_w, weights);
+  AxpyTensor(w_size, -lr / batch_size, increment_tmp_w, w_updates);
   free(increment_tmp_w);
 }
 
-void AdamOptimizer(int input_size, int output_size, float *weights, float *weight_grads,
-                   float *biases, float *bias_grads, float *grad_cum_w, float *grad_cum_square_w,
-                   float *grad_cum_b, float *grad_cum_square_b, float lr, float beta_1,
-                   float beta_2, float *w_updates, float *b_updates) {
+void AdamOptimizer(Network *net, Layer *layer) {
+  int input_size = layer->input_size;
+  int output_size = layer->output_size;
+  int batch_size = net->batch_size;
   int w_size = input_size * output_size;
   int b_size = output_size;
+  float *weights = layer->weights;
+  float *weight_grads = layer->weight_grads;
+  float *biases = layer->biases;
+  float *bias_grads = layer->bias_grads;
+  float *w_updates = layer->weight_updates;
+  float *b_updates = layer->bias_updates;
+  float *grad_cum_b = layer->grad_cum_b;
+  float *grad_cum_w = layer->grad_cum_w;
+  float *grad_cum_square_b = layer->grad_cum_square_b;
+  float *grad_cum_square_w = layer->grad_cum_square_w;
+  float lr = net->learning_rate;
+  float beta_1 = net->beta_1;
+  float beta_2 = net->beta_2;
+  float momentum = net->momentum;
+  float decay = net->decay;
 
   float *m_hat_b = calloc(b_size, sizeof(float));
   float *m_hat_w = calloc(b_size, sizeof(float));
@@ -212,29 +272,13 @@ void AdamOptimizer(int input_size, int output_size, float *weights, float *weigh
   SqrtTensor(b_size, v_hat_b, v_hat_b);
   DivTensor(b_size, eps, 1, v_hat_b, v_hat_b);
   DotTensor(b_size, m_hat_b, v_hat_b);
-  CopyTensor(b_size, v_hat_b, b_updates);
-  AxpyTensor(b_size, -lr, v_hat_b, biases);
+  AxpyTensor(b_size, -lr / batch_size, v_hat_b, biases);
+  AxpyTensor(b_size, -lr / batch_size, v_hat_b, b_updates);
 
   // weights
   SqrtTensor(w_size, v_hat_w, v_hat_w);
   DivTensor(w_size, eps, 1, v_hat_w, v_hat_w);
   DotTensor(w_size, m_hat_w, v_hat_w);
-  CopyTensor(w_size, v_hat_w, w_updates);
-  AxpyTensor(w_size, -lr, v_hat_w, weights);
-}
-
-char *GetOptimizerStr(OptType opt_type) {
-  char *opt_str;
-  if (opt_type == ADAM) {
-    opt_str = "adam";
-  } else if (opt_type == SGD) {
-    opt_str = "sgd";
-  } else if (opt_type == ADAGRAD) {
-    opt_str = "adagrad";
-  } else if (opt_type == RMSPROP) {
-    opt_str = "rmsprop";
-  } else {
-    opt_str = "error";
-  }
-  return opt_str;
+  AxpyTensor(w_size, -lr / batch_size, v_hat_w, weights);
+  AxpyTensor(w_size, -lr / batch_size, v_hat_w, w_updates);
 }

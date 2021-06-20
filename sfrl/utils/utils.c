@@ -100,3 +100,39 @@ void PrintTensor2D(float *Tensor, int n, int m) {
     printf("\n");
   }
 }
+
+char *GetOptimizerStr(OptType opt_type) {
+  char *opt_str;
+  if (opt_type == ADAM) {
+    opt_str = "adam";
+  } else if (opt_type == SGD) {
+    opt_str = "sgd";
+  } else if (opt_type == ADAGRAD) {
+    opt_str = "adagrad";
+  } else if (opt_type == RMSPROP) {
+    opt_str = "rmsprop";
+  } else {
+    opt_str = "error";
+  }
+  return opt_str;
+}
+
+char *GetLayerTypeStr(LayerType layer_type) {
+  char *layer_type_str;
+  if (layer_type == DENSE) {
+    layer_type_str = "Dense";
+  } else if (layer_type == BATCHNORMALIZATION) {
+    layer_type_str = "BatchNorm";
+  } else if (layer_type == SOFTMAX) {
+    layer_type_str = "SoftMax";
+  } else if (layer_type == DROPOUT) {
+    layer_type_str = "DropOut";
+  } else if (layer_type == ACTIVATION) {
+    layer_type_str = "Activation";
+  } else if (layer_type == LOSS) {
+    layer_type_str = "Loss";
+  } else {
+    layer_type_str = "error";
+  }
+  return layer_type_str;
+}

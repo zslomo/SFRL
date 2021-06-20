@@ -1,11 +1,11 @@
 #include "base_layer.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "../network/network.h"
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
 #include "../utils/utils.h"
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 void UpdateLayer(Layer *layer, Network *net) {
   int input_size = layer->input_size;
@@ -42,25 +42,20 @@ void UpdateLayer(Layer *layer, Network *net) {
   float momentum = net->momentum;
   float decay = net->decay;
   switch (net->opt_type) {
-  case ADAM:
-    AdamOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads, grad_cum_w,
-                  grad_cum_square_w, grad_cum_b, grad_cum_square_b, lr, beta_1, beta_2, w_updates,
-                  b_updates);
-    break;
-  case SGD:
-    SgdOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads, grad_cum_w,
-                 grad_cum_b, lr, momentum, w_updates, b_updates);
-    break;
-  case ADAGRAD:
-    AdaGradOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads,
-                     grad_cum_square_w, grad_cum_square_b, lr, w_updates, b_updates);
-    break;
-  case RMSPROP:
-    RmsPropOptimizer(input_size, output_size, weights, weight_grads, biases, bias_grads,
-                     grad_cum_square_w, grad_cum_square_b, lr, decay, w_updates, b_updates);
-    break;
-  default:
-    break;
+    case ADAM:
+      AdamOptimizer(net, layer);
+      break;
+    case SGD:
+      SgdOptimizer(net, layer);
+      break;
+    case ADAGRAD:
+      AdaGradOptimizer(net, layer);
+      break;
+    case RMSPROP:
+      RmsPropOptimizer(net, layer);
+      break;
+    default:
+      break;
   }
 }
 
@@ -149,6 +144,13 @@ void ResetLayer(Layer *layer) {
   if (layer->bias_grads) {
     InitTensor(layer->output_size, 0, layer->bias_grads);
   }
+  if (layer->weight_updates) {
+    InitTensor(layer->input_size * layer->output_size, 0,
+               layer->weight_updates);
+  }
+  if (layer->bias_updates) {
+    InitTensor(layer->output_size, 0, layer->bias_updates);
+  }
   if (layer->bn_gamma_grads) {
     InitTensor(layer->output_size, 0, layer->bn_gamma_grads);
   }
@@ -159,7 +161,8 @@ void ResetLayer(Layer *layer) {
     InitTensor(layer->output_size * layer->input_size, 0, layer->output_normed);
   }
   if (layer->output_before_norm) {
-    InitTensor(layer->output_size * layer->input_size, 0, layer->output_before_norm);
+    InitTensor(layer->output_size * layer->input_size, 0,
+               layer->output_before_norm);
   }
 }
 
@@ -277,7 +280,8 @@ void PrintOutput(Layer *layer, int batch_num) {
   int batch_size = layer->batch_size;
   batch_num = batch_num > batch_size ? batch_size : batch_num;
 
-  printf("layer: %s, output size = %d × %d:\n", layer->layer_name, batch_size, n);
+  printf("layer: %s, output size = %d × %d:\n", layer->layer_name, batch_size,
+         n);
   // PrintGridInnerline(n, 10);
   PrintGridOutline(n * (num_size + 3) - 1);
   // PrintGridColums(n , num_size + 2);
@@ -329,7 +333,6 @@ void PrintGrad(Layer *layer) {
       if (res >= 0) {
         printf(" %s |", FloatToString(num_size, res));
       } else {
-
         printf("%s |", FloatToString(num_size, res));
       }
     }
@@ -358,24 +361,4 @@ void PrintDelta(Layer *layer, int batch_num) {
     printf("\n");
   }
   PrintGridOutline(n * (num_size + 3) - 1);
-}
-
-char *GetLayerTypeStr(LayerType layer_type) {
-  char *layer_type_str;
-  if (layer_type == DENSE) {
-    layer_type_str = "Dense";
-  } else if (layer_type == BATCHNORMALIZATION) {
-    layer_type_str = "BatchNorm";
-  } else if (layer_type == SOFTMAX) {
-    layer_type_str = "SoftMax";
-  } else if (layer_type == DROPOUT) {
-    layer_type_str = "DropOut";
-  } else if (layer_type == ACTIVATION) {
-    layer_type_str = "Activation";
-  } else if (layer_type == LOSS) {
-    layer_type_str = "Loss";
-  } else {
-    layer_type_str = "error";
-  }
-  return layer_type_str;
 }

@@ -1,23 +1,27 @@
+#include "init.h"
 #include <float.h>
 #include <limits.h>
 #include <math.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include "init.h"
 
 #define TWO_PI 6.283185307
 
 void InitLayer(float *weights, float *biases, int input_size, int output_size,
-               InitType init_type) {
+               InitType init_type, int seed) {
   float scale = sqrt(2. / input_size);
   if (init_type == UNIFORM) {
     for (int i = 0; i < output_size * input_size; ++i) {
-      weights[i] = scale * rand_uniform(-1, 1);
+      weights[i] = scale * rand_uniform(-1, 1, seed);
+    }
+  } else if (init_type == NORMAL) {
+    for (int i = 0; i < output_size * input_size; ++i) {
+      weights[i] = scale * rand_normal(seed);
     }
   } else {
     for (int i = 0; i < output_size * input_size; ++i) {
-      weights[i] = scale * rand_normal();
+      weights[i] = 1.0;
     }
   }
 
@@ -28,7 +32,7 @@ void InitLayer(float *weights, float *biases, int input_size, int output_size,
 }
 
 // 返回均匀分布随机数
-float rand_uniform(float min, float max) {
+float rand_uniform(float min, float max, int seed) {
   if (max < min) {
     float swap = min;
     min = max;
@@ -38,7 +42,8 @@ float rand_uniform(float min, float max) {
 }
 
 // Box-Muller算法 返回标准正态分布随机数（float）
-float rand_normal() {
+float rand_normal(int seed) {
+  srand(seed);
   static int haveSpare = 0;
   static double rand1, rand2;
 

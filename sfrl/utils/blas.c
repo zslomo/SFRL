@@ -76,11 +76,6 @@ void GemmTAB(int M, int N, int K, float ALPHA, float *A, int lda, float *B, int 
       register float A_PART = ALPHA * A[k * lda + i];
       for (int j = 0; j < N; ++j) {
         C[i * ldc + j] += A_PART * B[k * ldb + j];
-        if(C[i * ldc + j] > 100){
-          printf("i = %d, k = %d, j = %d\n", i, k, j);
-          printf("C[i * ldc + j] = %f, A_PART = %d, A[k * lda + i] = %f, B[k * ldb + j] = %f\n",
-                 C[i * ldc + j], A_PART, A[k * lda + i], B[k * ldb + j]);
-        }
       }
     }
   }

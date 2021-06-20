@@ -127,7 +127,6 @@ void PrintOutput(Layer *layer, int batch_num);
 void PrintGrad(Layer *layer);
 void PrintDelta(Layer *layer, int batch_num);
 void PrintUpdate(Layer *layer);
-char *GetLayerTypeStr(LayerType layer_type);
 void ResetLayer(Layer *layer);
 
 #endif
