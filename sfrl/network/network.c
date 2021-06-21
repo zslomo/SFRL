@@ -1,10 +1,4 @@
 #include "network.h"
-#include <assert.h>
-#include <float.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "../activation/activation.h"
 #include "../data/data.h"
 #include "../layer/base_layer.h"
@@ -14,6 +8,12 @@
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
 #include "../utils/utils.h"
+#include <assert.h>
+#include <float.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 Network *MakeNetwork(int n, int batch_size) {
   Network *net = calloc(1, sizeof(Network));
@@ -47,10 +47,13 @@ void PrintNetwork(Network *net) {
     int input_size = layer->input_size;
     int output_size = layer->output_size;
     int weight_num = input_size * output_size + output_size;
-    if (layer->layer_type == DENSE || layer->layer_type == BATCHNORMALIZATION) {
-      printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n",
-             layer_type_str, input_size, output_size, acti_type_str,
-             weight_num);
+    if (layer->layer_type == DENSE) {
+      printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n", layer_type_str, input_size,
+             output_size, acti_type_str, weight_num);
+      all_weight_num += weight_num;
+    } else if (layer->layer_type == BATCHNORMALIZATION) {
+      printf("-- %s: shape: %d × %d, weight num: %d\n", layer_type_str, input_size, output_size,
+             output_size * 2);
       all_weight_num += weight_num;
     } else {
       printf("-- %s\n", layer_type_str);
@@ -58,8 +61,7 @@ void PrintNetwork(Network *net) {
   }
   char *loss_str = GetLossStr(net->layers[net->layer_depth - 1]->loss_type);
   char *opt_str = GetOptimizerStr(net->opt_type);
-  printf("-- loss: %s, optimizer: %s, all weight num: %d\n", loss_str, opt_str,
-         all_weight_num);
+  printf("-- loss: %s, optimizer: %s, all weight num: %d\n", loss_str, opt_str, all_weight_num);
 }
 
 float Train(Network *net, Data *data, OptType opt_type, int epoches) {
@@ -89,6 +91,7 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       // net->layers[0]->print_weight(net->layers[0]);
       ForwardNetwork(net);
       // net->layers[1]->print_input(net->layers[1], 16);
+      // net->layers[1]->print_output(net->layers[1], 16);
       // net->layers[0]->print_input(net->layers[0], 16);
       // net->layers[2]->print_input(net->layers[2], 16);
       // net->layers[2]->print_output(net->layers[2], 16);
@@ -101,7 +104,7 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       // net->layers[0]->print_weight(net->layers[0]);
       UpdateNetwork(net);
       // net->layers[0]->print_update(net->layers[0]);
-      // net->layers[0]->print_weight(net->layers[0]);
+      // net->layers[1]->print_weight(net->layers[1]);
       // printf("batch %d update done.\n", j);
       ResetNetwork(net);
       loss_sum += net->loss;
@@ -118,12 +121,9 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
 
       // 最后一个不够 batch_size 的 batch 需要单独处理
       net->origin_input =
-          realloc(net->origin_input,
-                  last_batch_size * data->sample_size * sizeof(float));
-      net->ground_truth =
-          realloc(net->ground_truth, last_batch_size * sizeof(float));
-      GetNextBatchData(data, net, last_batch_size,
-                       batch_size * (batch_num - 2));
+          realloc(net->origin_input, last_batch_size * data->sample_size * sizeof(float));
+      net->ground_truth = realloc(net->ground_truth, last_batch_size * sizeof(float));
+      GetNextBatchData(data, net, last_batch_size, batch_size * (batch_num - 2));
       net->batch_trained_cnt++;
       ForwardNetwork(net);
       BackWardNetwork(net);
@@ -135,10 +135,8 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       for (int j = 0; j < net->layer_depth; ++j) {
         net->layers[j]->batch_size = batch_size;
       }
-      net->origin_input =
-          realloc(net->origin_input, net->input_size * sizeof(float));
-      net->ground_truth =
-          realloc(net->ground_truth, batch_size * sizeof(float));
+      net->origin_input = realloc(net->origin_input, net->input_size * sizeof(float));
+      net->ground_truth = realloc(net->ground_truth, batch_size * sizeof(float));
     }
 
     epoch_loss = loss_sum / (batch_num * batch_size + last_batch_size);
@@ -150,16 +148,13 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
 
 float Test(Network *net, Data *data) {
   net->input_size = data->sample_num * data->sample_size;
-  net->origin_input =
-      realloc(net->origin_input, net->input_size * sizeof(float));
-  net->ground_truth =
-      realloc(net->ground_truth, data->sample_num * sizeof(float));
+  net->origin_input = realloc(net->origin_input, net->input_size * sizeof(float));
+  net->ground_truth = realloc(net->ground_truth, data->sample_num * sizeof(float));
   GetNextBatchData(data, net, data->sample_num, 0);
   ForwardNetwork(net);
   // net->layers[2]->print_input(net->layers[2], net->batch_size);
   float loss = net->loss / data->sample_num;
-  float acc = AccMetric(data->sample_num, data->class_num, net->pred,
-                        net->ground_truth);
+  float acc = AccMetric(data->sample_num, data->class_num, net->pred, net->ground_truth);
   printf("Test loss = %f, acc = %f\n", loss, acc);
   return acc;
 }
@@ -167,8 +162,7 @@ float Test(Network *net, Data *data) {
 void GetNextBatchData(Data *data, Network *net, int batch_size, int offset) {
   int size = data->sample_size;
   // copy输入
-  memcpy(net->origin_input, data->X + offset,
-         data->sample_size * batch_size * sizeof(float));
+  memcpy(net->origin_input, data->X + offset, data->sample_size * batch_size * sizeof(float));
   net->input = net->origin_input;
   // copy 标签
   memcpy(net->ground_truth, data->Y + offset, batch_size * sizeof(float));

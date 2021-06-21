@@ -69,14 +69,15 @@ int ReadData(char *filename, char **samples) {
 int BuildNet(Data *data, Network *net) {
   int class_num = 3;
   int seed = 1024;
-  DenseLayer *dnn_1 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 3, LINEAR, NORMAL, seed, "dense_1");
-  SoftmaxLayer *sm = MakeSoftmaxLayer(net->batch_size, class_num, "softmax");
-  LossLayer *ll = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
+
+  net->layers[0] =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_1");
+  net->layers[1] = MakeBatchNormLayer(net->batch_size, 16, 0.9, "bn_1");
+  net->layers[2] = MakeDenseLayer(net->batch_size, 16, 3, LINEAR, NORMAL, seed, "dense_2");
+  net->layers[3] = MakeSoftmaxLayer(net->batch_size, class_num, "softmax");
+  net->layers[4] = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
   net->sample_size = data->sample_size;
-  net->layers[0] = dnn_1;
-  net->layers[1] = sm;
-  net->layers[2] = ll;
+
   net->pred = calloc(net->batch_size * class_num, sizeof(float));
 }
 int main(int argc, char **argv) {
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
   int batch_size = 150;
   printf("get sample done...\n");
   Data *data = BuildInput(samples, batch_size, sample_num, 4);
-  Network *net = MakeNetwork(data->class_num, batch_size);
+  Network *net = MakeNetwork(5, batch_size);
   printf("make network done..\n");
   BuildNet(data, net);
   printf("start train...\n");

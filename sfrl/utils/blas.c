@@ -169,7 +169,7 @@ void MeanTensor(float *TensorX, int input_size, int batch_size, float *mean) {
   assert(batch_size > 1);
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
-      mean[i] += TensorX[i + input_size * j];
+      mean[i] += TensorX[i * batch_size + j];
     }
     mean[i] *= 1.0 / batch_size;
   }
@@ -179,7 +179,7 @@ void VarianceTensor(float *TensorX, int input_size, int batch_size, float *mean,
   assert(batch_size > 1);
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
-      variance[i] += pow(TensorX[i + input_size * j] - mean[i], 2);
+      variance[i] += pow(TensorX[i * batch_size + j] - mean[i], 2);
     }
     variance[i] *= 1.0 / (batch_size - 1);
   }
@@ -190,7 +190,7 @@ void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, flo
   float eps = 1e-8;
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
-      TensorX[i + input_size * j] = (TensorX[i + input_size * j] - mean[i]) / (sqrt(variance[i]));
+      TensorX[i * batch_size + j] = (TensorX[i * batch_size + j] - mean[i]) / (sqrt(variance[i]) + eps);
     }
   }
 }
@@ -198,7 +198,7 @@ void NormTensor(float *TensorX, int input_size, int batch_size, float *mean, flo
 void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamma, float *beta) {
   for (int i = 0; i < input_size; ++i) {
     for (int j = 0; j < batch_size; ++j) {
-      TensorX[i + input_size * j] = TensorX[i + input_size * j] * gamma[i] + beta[i];
+      TensorX[i * batch_size + j] = TensorX[i * batch_size + j] * gamma[i] + beta[i];
     }
   }
 }

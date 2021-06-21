@@ -118,8 +118,6 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
        layer->input_size, layer->delta, layer->output_size, layer->weight_grads, layer->output_size);
   /**
    *  计算 后一层的delta，即net->delta
-   *  反向传播的delta要在前一层计算好，这样的话当前层的权重梯度(也就是weight_grads)
-   *  就可以直接用input.T × (f'(x) * delta)算出来了
    *  A delta batch_size * output_size
    *  B weights input_size * output_size
    *  B.T       output_size * input_size
