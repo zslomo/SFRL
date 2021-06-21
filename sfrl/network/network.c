@@ -46,14 +46,15 @@ void PrintNetwork(Network *net) {
     char *acti_type_str = GetActivationTypeStr(layer->acti_type);
     int input_size = layer->input_size;
     int output_size = layer->output_size;
-    int weight_num = input_size * output_size + output_size;
     if (layer->layer_type == DENSE) {
+      int weight_num = input_size * output_size + output_size;
       printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n", layer_type_str, input_size,
              output_size, acti_type_str, weight_num);
       all_weight_num += weight_num;
     } else if (layer->layer_type == BATCHNORMALIZATION) {
+      int weight_num = output_size * 2;
       printf("-- %s: shape: %d × %d, weight num: %d\n", layer_type_str, input_size, output_size,
-             output_size * 2);
+             weight_num);
       all_weight_num += weight_num;
     } else {
       printf("-- %s\n", layer_type_str);
@@ -83,8 +84,8 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
     // for (int j = 0; j < 1; ++j) {
     for (int j = 0; j < batch_num; ++j) {
       net->batch = j;
-      // printf("------------------------- epoch %d, batch %d start
-      // ------------------------\n", i, j); 拿到一个batch的数据
+      // printf("------------------------- epoch %d, batch %d start------------------------\n", i, j); 
+      //拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
       // printf("batch %d get data done.\n", j);
       net->batch_trained_cnt += batch_size;
@@ -107,6 +108,7 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
       // net->layers[1]->print_weight(net->layers[1]);
       // printf("batch %d update done.\n", j);
       ResetNetwork(net);
+      // net->layers[1]->print_weight(net->layers[1]);
       loss_sum += net->loss;
       // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
     }
@@ -140,7 +142,7 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
     }
 
     epoch_loss = loss_sum / (batch_num * batch_size + last_batch_size);
-    printf("epoch %d loss = %f\n", i + 1, epoch_loss);
+    // printf("epoch %d loss = %f\n", i + 1, epoch_loss);
     net->reset(net);
   }
   return epoch_loss;
@@ -152,7 +154,6 @@ float Test(Network *net, Data *data) {
   net->ground_truth = realloc(net->ground_truth, data->sample_num * sizeof(float));
   GetNextBatchData(data, net, data->sample_num, 0);
   ForwardNetwork(net);
-  // net->layers[2]->print_input(net->layers[2], net->batch_size);
   float loss = net->loss / data->sample_num;
   float acc = AccMetric(data->sample_num, data->class_num, net->pred, net->ground_truth);
   printf("Test loss = %f, acc = %f\n", loss, acc);

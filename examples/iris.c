@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../sfrl/activation/activation.h"
 #include "../sfrl/data/data.h"
@@ -18,7 +19,8 @@
 #include "../sfrl/optimizer/optimizer.h"
 #include "../sfrl/utils/blas.h"
 
-Data *BuildInput(char **samples, int batch_size, int sample_num, int sample_size) {
+Data *BuildInput(char **samples, int batch_size, int sample_num,
+                 int sample_size) {
   Data *data = MakeData(2, sample_size, sample_num);
   data->X = calloc(sample_size * data->sample_num, sizeof(float));
   data->Y = calloc(sample_num, sizeof(float));
@@ -70,17 +72,20 @@ int BuildNet(Data *data, Network *net) {
   int class_num = 3;
   int seed = 1024;
 
-  net->layers[0] =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_1");
-  net->layers[1] = MakeBatchNormLayer(net->batch_size, 16, 0.9, "bn_1");
-  net->layers[2] = MakeDenseLayer(net->batch_size, 16, 3, LINEAR, NORMAL, seed, "dense_2");
+  net->layers[0] = MakeDenseLayer(net->batch_size, data->sample_size, 1024,
+                                  LINEAR, NORMAL, seed, "dense_1");
+  net->layers[1] = MakeBatchNormLayer(net->batch_size, 1024, 0.9, "bn_1");
+  net->layers[2] =
+      MakeDenseLayer(net->batch_size, 1024, class_num, LINEAR, NORMAL, seed, "dense_2");
   net->layers[3] = MakeSoftmaxLayer(net->batch_size, class_num, "softmax");
-  net->layers[4] = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
+  net->layers[4] =
+      MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
   net->sample_size = data->sample_size;
 
   net->pred = calloc(net->batch_size * class_num, sizeof(float));
 }
 int main(int argc, char **argv) {
+  clock_t b_time = clock();
   printf("Read data...\n");
   char **samples = malloc(255 * sizeof(char *));
   int sample_num = ReadData("../data/iris/iris.data", samples);
@@ -92,6 +97,7 @@ int main(int argc, char **argv) {
   BuildNet(data, net);
   printf("start train...\n");
   net->learning_rate = 0.1;
-  net->train(net, data, SGD, 100);
+  net->train(net, data, SGD, 1000);
+  printf("time cost %f\n", (clock() - b_time) * 1.0 / CLOCKS_PER_SEC);
   net->test(net, data);
 }

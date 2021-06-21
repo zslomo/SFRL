@@ -27,7 +27,7 @@ void SgdOptimizer(Network *net, Layer *layer) {
 
   // bias
   float *grad_tmp_b = calloc(b_size, sizeof(float));
-  CopyTensor(b_size, grad_cum_b, grad_tmp_b);
+  memcpy(grad_tmp_b, grad_cum_b, b_size * sizeof(float));
   // ρVt-1
   ScalTensor(b_size, 1 - momentum, grad_tmp_b);
   // g + ρVt-1
@@ -36,12 +36,12 @@ void SgdOptimizer(Network *net, Layer *layer) {
   AxpyTensor(b_size, -lr / batch_size, grad_tmp_b, biases);
   AxpyTensor(b_size, -lr / batch_size, grad_tmp_b, b_updates);
   // 动量更新d
-  CopyTensor(b_size, grad_tmp_b, grad_cum_b);
+  memcpy(grad_cum_b, grad_tmp_b, b_size * sizeof(float));
   free(grad_tmp_b);
 
   // weight
   float *grad_tmp_w = calloc(w_size, sizeof(float));
-  CopyTensor(w_size, grad_cum_w, grad_tmp_w);
+  memcpy(grad_tmp_w, grad_cum_w, w_size * sizeof(float));
   // ρVt-1
   ScalTensor(w_size, 1 - momentum, grad_tmp_w);
   // g + ρVt-1
@@ -50,7 +50,7 @@ void SgdOptimizer(Network *net, Layer *layer) {
   AxpyTensor(w_size, -lr / batch_size, grad_tmp_w, weights);
   AxpyTensor(w_size, -lr / batch_size, grad_tmp_w, w_updates);
   // 动量更新
-  CopyTensor(w_size, grad_tmp_w, grad_cum_w);
+  memcpy(grad_cum_w, grad_tmp_w, w_size * sizeof(float));
   free(grad_tmp_w);
 }
 

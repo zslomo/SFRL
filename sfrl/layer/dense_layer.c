@@ -50,7 +50,7 @@ DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, Acti
 void UpdateDenseLayer(DenseLayer *layer, Network *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, Network *net) {
-  CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
+  memcpy(layer->input, net->input, layer->input_size * net->batch_size * sizeof(float));
   int output_tensor_size = layer->output_size * net->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
   /**
@@ -95,7 +95,7 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  计算 bias_grads = delta
    **/
   for (int i = 0; i < net->batch_size; ++i) {
-    CopyTensor(layer->output_size, layer->delta + i * layer->output_size, layer->bias_grads);
+    memcpy(layer->bias_grads, layer->delta + i * layer->output_size, layer->output_size * sizeof(float));
     // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
 

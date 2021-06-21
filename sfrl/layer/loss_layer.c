@@ -35,7 +35,6 @@ void ForwardLossLayer(LossLayer *layer, Network *net) {
   net->loss = 0;
   int n = net->batch_size * layer->input_size;
   net->output = net->input;
-  // CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
   memcpy(layer->input, net->input, layer->input_size * net->batch_size * sizeof(float));
   InitTensor(layer->output_size * net->batch_size, 0, layer->output);
   // 计算loss

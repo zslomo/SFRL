@@ -158,10 +158,10 @@ void ResetLayer(Layer *layer) {
     InitTensor(layer->output_size, 0, layer->bn_beta_grads);
   }
   if (layer->output_normed) {
-    InitTensor(layer->output_size * layer->input_size, 0, layer->output_normed);
+    InitTensor(layer->output_size * layer->batch_size, 0, layer->output_normed);
   }
   if (layer->output_before_norm) {
-    InitTensor(layer->output_size * layer->input_size, 0,
+    InitTensor(layer->output_size * layer->batch_size, 0,
                layer->output_before_norm);
   }
 }

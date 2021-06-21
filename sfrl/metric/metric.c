@@ -13,7 +13,7 @@ float MseMetric(int n, float *pred, float *truth) {
 }
 
 float AccMetric(int n, int class_num, float *pred, float *truth) {
-  float acc_cnt;
+  float acc_cnt = 0;
   int pred_class = -1;
   assert(n > 0);
   for (int i = 0; i < n; ++i) {

@@ -32,7 +32,7 @@ SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size,
 }
 
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
-  CopyTensor(layer->input_size * net->batch_size, net->input, layer->input);
+  memcpy(layer->input, net->input, layer->input_size * net->batch_size * sizeof(float));
   SoftmaxBatch(net->input, layer->input_size, net->batch_size,
                layer->temperature, layer->output);
   memcpy(net->pred, layer->output,
@@ -47,7 +47,7 @@ void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
-  CopyTensor(net->batch_size * layer->input_size, layer->delta, net->delta);
+  memcpy(net->delta, layer->delta, net->batch_size * layer->input_size * sizeof(float));
   // AxpyTensor(net->batch_size * layer->input_size, 1, layer->delta,
   // net->delta);
 }
