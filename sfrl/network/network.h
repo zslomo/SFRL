@@ -6,9 +6,7 @@
 #include "../optimizer/optimizer.h"
 #include "../loss/loss.h"
 #include "../data/data.h"
-
-typedef enum { TRAIN, TEST } NetMode;
-typedef enum { ADAM, SGD, ADAGRAD, RMSPROP } OptType;
+#include "../type/type.h"
 
 struct Network {
   Layer **layers;

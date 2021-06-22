@@ -1,10 +1,6 @@
 #ifndef LOSS_H
 #define LOSS_H
-
-/**
- * 损失函数
- **/
-typedef enum { MSE, CE, CEW } LossType;
+#include "../type/type.h"
 
 /**
  * todo：正则项

@@ -3,6 +3,7 @@
 
 #include "../activation/activation.h"
 #include "../loss/loss.h"
+#include "../type/type.h"
 #include <stddef.h>
 
 struct Layer;
@@ -12,29 +13,26 @@ struct Network;
 typedef struct Network Network;
 
 /**
- * 网络结构类型，强化学习没有太复杂的结构,这里主要是全连接、卷积(类似棋盘游戏需要)
- * bn 和一些激活函数 LOSS 是用来计算最后一步的delta也就是predict和Y的差
- * ACTIVE 表征这个层是激活函数
- * TODO 卷积、池化、RNN
- **/
-typedef enum {
-  DENSE,
-  NORMALIZATION,
-  BATCHNORMALIZATION,
-  DROPOUT,
-  ACTIVATION,
-  SOFTMAX,
-  LOSS
-} LayerType;
-
-/**
  * 网络层类型，比较复杂，详见每个字段的注释
  **/
 struct Layer {
   LayerType layer_type; // 层类型
   ActiType acti_type;   // 激活函数
   LossType loss_type;   // 损失函数类型
+  MergeType merge_type; // merge类型
   char *layer_name;
+
+  /**
+   *  这两个指针数组用来指向当前层的上n层和下n层
+   *  通过这种设计，构建一个layer graph，类似于tensorflow的计算图，但是简单很多，
+   *  tf是通过对每个op构造计算图，可以支持任意构造的计算流，也就天然的支持任意复杂的计算逻辑，
+   *  并可以做到非常细致的优化，抛开易用性，tf的设计理念是非常棒的，只是产品做不做的好跟技术
+   *  往往无关，在用户体验方面被pytorch全面超越，tf2全面重做也于事无补，一声叹息啊
+   **/
+  Layer **pre_layers;
+  int pre_layer_cnt;
+  Layer **post_layers;
+  int post_layer_cnt;
 
   int batch_normalize;
   /**
@@ -47,7 +45,7 @@ struct Layer {
    *  But !
    *  But!!!!!!!!
    *  随时获取网络的输入 输出 权重 梯度
-   * 是debug非常需要的东西，所以这里还是给了一个指针，保存每层的输入
+   *  是debug非常需要的东西，所以这里还是给了一个指针，保存每层的输入
    * */
   float *input;
   float *output;

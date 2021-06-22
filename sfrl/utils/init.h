@@ -1,10 +1,6 @@
 #ifndef INIT_H
 #define INIT_H
-
-/**
- * 初始化类型
- **/
-typedef enum { NORMAL, UNIFORM, DEBUG } InitType;
+#include "../type/type.h"
 
 float rand_uniform(float min, float max, int seed);
 float rand_normal(int seed);

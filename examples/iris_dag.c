@@ -70,6 +70,18 @@ int ReadData(char *filename, char **samples) {
 int BuildNet(Data *data, Network *net) {
   int class_num = 3;
   int seed = 1024;
+  Layer *dense_1 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_1");
+  Layer *dense_2 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_2");
+  Layer *dense_3 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_3");
+  Layer *merge_1 = Make
+  Layer *dense_4 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_4");
+  Layer *dense_5 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_4");
+  
   net->layers[0] =
       MakeDenseLayer(net->batch_size, data->sample_size, 1024, LINEAR, NORMAL, seed, "dense_1");
   net->layers[1] = MakeBatchNormLayer(net->batch_size, 1024, 0.9, "bn_1");

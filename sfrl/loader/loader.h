@@ -2,6 +2,7 @@
 #define LOADER_H
 #include <stdio.h>
 #include "../loss/loss.h"
+#include "../type/type.h"
 
 void Strip(char *s);
 char *FileGetLine(FILE *fp);
