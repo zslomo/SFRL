@@ -28,6 +28,8 @@ Network *MakeNetwork(int n, int batch_size) {
   net->beta_2 = 0.999;
   net->eps = 1e-8;
   net->batch_size = batch_size;
+  net->simple_train = SimpleTrain;
+  net->simple_test = SimpleTest;
   net->train = Train;
   net->test = Test;
   net->reset = ResetNetwork;
@@ -65,7 +67,7 @@ void PrintNetwork(Network *net) {
   printf("-- loss: %s, optimizer: %s, all weight num: %d\n", loss_str, opt_str, all_weight_num);
 }
 
-float Train(Network *net, Data *data, OptType opt_type, int epoches) {
+float SimpleTrain(Network *net, Data *data, OptType opt_type, int epoches) {
   printf("epoches = %d\n", epoches);
   int batch_size = net->batch_size;
   int batch_num = data->sample_num / batch_size;
@@ -81,46 +83,24 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
   for (int i = 0; i < epoches; ++i) {
     loss_sum = 0;
     net->epoch = i + 1;
-    // for (int j = 0; j < 1; ++j) {
     for (int j = 0; j < batch_num; ++j) {
       net->batch = j;
-      // printf("------------------------- epoch %d, batch %d start------------------------\n", i, j); 
       //拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
-      // printf("batch %d get data done.\n", j);
       net->batch_trained_cnt += batch_size;
-      // net->layers[0]->print_weight(net->layers[0]);
       ForwardNetwork(net);
-      // net->layers[1]->print_input(net->layers[1], 16);
-      // net->layers[1]->print_output(net->layers[1], 16);
-      // net->layers[0]->print_input(net->layers[0], 16);
-      // net->layers[2]->print_input(net->layers[2], 16);
-      // net->layers[2]->print_output(net->layers[2], 16);
-      // printf("batch %d forward done.\n", j);
       BackWardNetwork(net);
-      // net->layers[0]->print_grad(net->layers[0]);
-      // net->layers[2]->print_delta(net->layers[2], 4);
-      // net->layers[0]->print_delta(net->layers[0], 16);
-      // printf("batch %d backward done.\n", j);
-      // net->layers[0]->print_weight(net->layers[0]);
       UpdateNetwork(net);
-      // net->layers[0]->print_update(net->layers[0]);
-      // net->layers[1]->print_weight(net->layers[1]);
-      // printf("batch %d update done.\n", j);
       ResetNetwork(net);
-      // net->layers[1]->print_weight(net->layers[1]);
       loss_sum += net->loss;
-      // printf("batch %d done. loss = %f\n", j, net->loss/net->batch_size);
     }
     if (last_batch_size) {
-      // 处理最后一个batch
-      // 要改掉所有的 batch_size
+      // 处理最后一个batch, 要改掉所有的 batch_size
       net->batch = batch_num;
       net->batch_size = last_batch_size;
       for (int j = 0; j < net->layer_depth; ++j) {
         net->layers[j]->batch_size = last_batch_size;
       }
-
       // 最后一个不够 batch_size 的 batch 需要单独处理
       net->origin_input =
           realloc(net->origin_input, last_batch_size * data->sample_size * sizeof(float));
@@ -148,7 +128,7 @@ float Train(Network *net, Data *data, OptType opt_type, int epoches) {
   return epoch_loss;
 }
 
-float Test(Network *net, Data *data) {
+float SimpleTest(Network *net, Data *data) {
   net->input_size = data->sample_num * data->sample_size;
   net->origin_input = realloc(net->origin_input, net->input_size * sizeof(float));
   net->ground_truth = realloc(net->ground_truth, data->sample_num * sizeof(float));
@@ -159,6 +139,10 @@ float Test(Network *net, Data *data) {
   printf("Test loss = %f, acc = %f\n", loss, acc);
   return acc;
 }
+
+float Train(Network *net, OptType opt_type, int epoches) {}
+
+float Test(Network *net) {}
 
 void GetNextBatchData(Data *data, Network *net, int batch_size, int offset) {
   int size = data->sample_size;
@@ -182,6 +166,18 @@ void ForwardNetwork(Network *net) {
   }
   net->input = net->origin_input;
 }
+
+void ForwardNetworkDag(Network *net) {
+  for (int i = 0; i < net->layer_depth; ++i) {
+    net->active_layer_index = i;
+    Layer *layer = net->layers[i];
+    layer->ground_truth = net->ground_truth;
+    layer->forward(layer, net);
+    net->input = layer->output;
+  }
+  net->input = net->origin_input;
+}
+
 /**
  *  反向传播部分，维护一个delta来实现链式求导法则，delta是输入的导数
  *  delta = dL / dx
@@ -243,4 +239,22 @@ void FreeNetwork(Network *net) {
   if (net->ground_truth) {
     free(net->ground_truth);
   }
+}
+
+/**
+ *  找到l1 l2 各自指针数组的空位置，然后建立 l1 <--> l2的双向链接
+ **/
+void LinkLayers(Layer *l1, Layer *l2) {
+  assert(l1->post_layers[l1->post_layer_cnt - 1] == 0);
+  assert(l2->pre_layers[l2->pre_layer_cnt - 1] == 0);
+  int i = 0;
+  while (l1->post_layers[++i])
+    ;
+
+  l1->post_layers[i] = l2;
+
+  int i = 0;
+  while (l2->pre_layers[++i])
+    ;
+  l2->pre_layers[i] = l1;
 }

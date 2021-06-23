@@ -198,9 +198,7 @@ void BatchNormTensor(float *TensorX, int input_size, int batch_size, float *gamm
 }
 
 void InitTensor(int size, float ALPHA, float *TensorX) {
-  for (int i = 0; i < size; ++i) {
-    TensorX[i] = ALPHA;
-  }
+  memset(TensorX, ALPHA, size);
 }
 
 /**

@@ -1,22 +1,32 @@
 #include "softmax_layer.h"
+#include "../loss/loss.h"
+#include "../utils/blas.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../loss/loss.h"
-#include "../utils/blas.h"
 
-SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size,
-                               char *layer_name) {
+SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size, int pre_layer_cnt,
+                               int post_layer_cnt, char *layer_name) {
   SoftmaxLayer *layer = calloc(1, sizeof(SoftmaxLayer));
   layer->layer_type = SOFTMAX;
   layer->batch_size = batch_size;
-  layer->input_size =
-      input_size;  // softmax_layer的输入输出元素相同 其实就是类别个数
+  layer->input_size = input_size; // softmax_layer的输入输出元素相同 其实就是类别个数
   layer->output_size = input_size;
   layer->layer_name = layer_name;
+  
+  assert(pre_layer_cnt <= 1);
+  layer->pre_layer_cnt = pre_layer_cnt;
+  if (pre_layer_cnt > 0) {
+    layer->post_layers = calloc(pre_layer_cnt, sizeof(Layer *));
+  }
+  layer->post_layer_cnt = post_layer_cnt;
+  if (post_layer_cnt > 0) {
+    layer->post_layers = calloc(post_layer_cnt, sizeof(Layer *));
+  }
+
   layer->input = calloc(input_size * batch_size, sizeof(float));
   layer->output = calloc(input_size * batch_size, sizeof(float));
   layer->delta = calloc(input_size * batch_size, sizeof(float));
@@ -32,11 +42,9 @@ SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size,
 }
 
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size * sizeof(float));
-  SoftmaxBatch(net->input, layer->input_size, net->batch_size,
-               layer->temperature, layer->output);
-  memcpy(net->pred, layer->output,
-         net->batch_size * layer->output_size * sizeof(float));
+  memcpy(layer->input, net->input, layer->input_size * layer->batch_size * sizeof(float));
+  SoftmaxBatch(net->input, layer->input_size, layer->batch_size, layer->temperature, layer->output);
+  memcpy(net->pred, layer->output, layer->batch_size * layer->output_size * sizeof(float));
 }
 
 /**
@@ -47,8 +55,8 @@ void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
   // 注意，这里的net->delta是 i+1层的 delta也就是 反向传播的上一层
   // 计算后赋值给当前层的delta layer->delta
-  memcpy(net->delta, layer->delta, net->batch_size * layer->input_size * sizeof(float));
-  // AxpyTensor(net->batch_size * layer->input_size, 1, layer->delta,
+  memcpy(net->delta, layer->delta, layer->batch_size * layer->input_size * sizeof(float));
+  // AxpyTensor(layer->batch_size * layer->input_size, 1, layer->delta,
   // net->delta);
 }
 
@@ -57,8 +65,7 @@ void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net) {
  *  batch_size 指的是每个batch的大小，
  *  n 是分类个数
  * */
-void SoftmaxBatch(float *input, int n, int batch_size, float temp,
-                  float *output) {
+void SoftmaxBatch(float *input, int n, int batch_size, float temp, float *output) {
   for (int i = 0; i < batch_size; ++i) {
     int offset = i * n;
     // printf("input offset: %d, value: %f, %f\n", offset, (input + offset)[0],
@@ -80,7 +87,8 @@ void SoftmaxCore(float *input, int n, float temp, float *output) {
   // http://freemind.pluskid.org/machine-learning/softmax-vs-softmax-loss-numerical-stability/
   float largest = -FLT_MAX;
   for (int i = 0; i < n; ++i) {
-    if (input[i] > largest) largest = input[i];
+    if (input[i] > largest)
+      largest = input[i];
   }
   for (int i = 0; i < n; ++i) {
     float e = exp(input[i] / temp - largest / temp);

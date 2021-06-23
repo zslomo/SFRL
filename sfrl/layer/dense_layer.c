@@ -11,8 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, ActiType acti_type,
-                          InitType init_type, int seed, char *layer_name) {
+DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, int pre_layer_cnt,
+                           int post_layer_cnt, ActiType acti_type, InitType init_type, int seed,
+                           char *layer_name) {
   DenseLayer *layer = calloc(1, sizeof(DenseLayer));
   layer->layer_type = DENSE;
   layer->layer_name = layer_name;
@@ -20,6 +21,15 @@ DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, Acti
   layer->input_size = input_size;
   layer->output_size = output_size;
   layer->acti_type = acti_type;
+  assert(pre_layer_cnt <= 1);
+  layer->pre_layer_cnt = pre_layer_cnt;
+  if (pre_layer_cnt > 0) {
+    layer->post_layers = calloc(pre_layer_cnt, sizeof(Layer *));
+  }
+  layer->post_layer_cnt = post_layer_cnt;
+  if (post_layer_cnt > 0) {
+    layer->post_layers = calloc(post_layer_cnt, sizeof(Layer *));
+  }
 
   layer->output = calloc(output_size * batch_size, sizeof(float));
   layer->input = calloc(input_size * batch_size, sizeof(float));
@@ -50,8 +60,8 @@ DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, Acti
 void UpdateDenseLayer(DenseLayer *layer, Network *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, Network *net) {
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size * sizeof(float));
-  int output_tensor_size = layer->output_size * net->batch_size;
+  memcpy(layer->input, net->input, layer->input_size * layer->batch_size * sizeof(float));
+  int output_tensor_size = layer->output_size * layer->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
   /**
    *  计算 intput × weights
@@ -67,13 +77,13 @@ void ForwardDenseLayer(DenseLayer *layer, Network *net) {
    **/
   int TransA = 0;
   int TransB = 0;
-  Gemm(TransA, TransB, net->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
+  Gemm(TransA, TransB, layer->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
        layer->input_size, layer->weights, layer->output_size, layer->output, layer->output_size);
 
   /**
     计算 + bias
    **/
-  for (int i = 0; i < net->batch_size; ++i) {
+  for (int i = 0; i < layer->batch_size; ++i) {
     AxpyTensor(layer->output_size, 1, layer->biases, layer->output + i * layer->output_size);
   }
   /**
@@ -83,7 +93,7 @@ void ForwardDenseLayer(DenseLayer *layer, Network *net) {
 }
 
 void BackwardDenseLayer(DenseLayer *layer, Network *net) {
-  int output_tensor_size = layer->output_size * net->batch_size;
+  int output_tensor_size = layer->output_size * layer->batch_size;
   /**
    *  计算 delta
    *  delta = f'(x) * delta_pre, delta_pre在之前就算好了。
@@ -94,8 +104,9 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
   /**
    *  计算 bias_grads = delta
    **/
-  for (int i = 0; i < net->batch_size; ++i) {
-    memcpy(layer->bias_grads, layer->delta + i * layer->output_size, layer->output_size * sizeof(float));
+  for (int i = 0; i < layer->batch_size; ++i) {
+    memcpy(layer->bias_grads, layer->delta + i * layer->output_size,
+           layer->output_size * sizeof(float));
     // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
 
@@ -114,8 +125,9 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
   int TransA = 1;
   int TransB = 0;
 
-  Gemm(TransA, TransB, layer->input_size, layer->output_size, net->batch_size, 1, 1, layer->input,
-       layer->input_size, layer->delta, layer->output_size, layer->weight_grads, layer->output_size);
+  Gemm(TransA, TransB, layer->input_size, layer->output_size, layer->batch_size, 1, 1, layer->input,
+       layer->input_size, layer->delta, layer->output_size, layer->weight_grads,
+       layer->output_size);
   /**
    *  计算 后一层的delta，即net->delta
    *  A delta batch_size * output_size
@@ -133,7 +145,7 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
   if (net->delta) {
     int TransA = 0;
     int TransB = 1;
-    Gemm(TransA, TransB, net->batch_size, layer->input_size, layer->output_size, 1, 1, layer->delta,
+    Gemm(TransA, TransB, layer->batch_size, layer->input_size, layer->output_size, 1, 1, layer->delta,
          layer->output_size, layer->weights, layer->output_size, net->delta, layer->input_size);
   }
 }

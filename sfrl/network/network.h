@@ -16,7 +16,12 @@ struct Network {
   int batch;
   int active_layer_index;
   float loss;
-  
+
+  // 计算图确定起始点
+  int start_layer_cnt;
+  Layer **start_layers;
+  int loss_layer_cnt;
+  Layer ** loss_layers;
 
   // 输入输出
   float *origin_input; // 这里维护的是整个网络的输入
@@ -46,8 +51,10 @@ struct Network {
   float beta_2;
   float eps;
 
-  float (*train)(struct Network *, struct Data *, OptType, int);
-  float (*test)(struct Network *, struct Data *);
+  float (*simple_train)(struct Network *, struct Data *, OptType, int);
+  float (*train)(struct Network *, OptType, int);
+  float (*simple_test)(struct Network *, struct Data *);
+  float (*test)(struct Network *, OptType, int);
   void (*reset)(struct Network *);
   void (*print)(struct Network *);
 };
@@ -58,9 +65,12 @@ void ForwardNetwork(Network *net);
 void BackWardNetwork(Network *net);
 void UpdateNetwork(Network *net);
 void GetNextBatchData(Data *data, Network *net, int sample_num, int offset);
-float Train(Network *net, Data *data, OptType opt_type, int epoches);
-float Test(Network *net, Data *data);
+float SimpleTrain(Network *net, Data *data, OptType opt_type, int epoches);
+float Train(Network *net, OptType opt_type, int epoches);
+float SimpleTest(Network *net, Data *data);
+float Test(Network *net);
 void PrintNetwork(Network *net);
 void ResetNetwork(Network *net);
+void LinkLayers(Layer *l1, Layer *l2);
 
 #endif

@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, float rolling_momentum,
-                                   char *layer_name) {
+BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, int pre_layer_cnt,
+                                   int post_layer_cnt, float rolling_momentum, char *layer_name) {
   int output_size = input_size;
   BatchNormLayer *layer = calloc(1, sizeof(BatchNormLayer));
   layer->rolling_momentum = rolling_momentum;
@@ -20,6 +20,18 @@ BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, float rolling
   layer->batch_size = batch_size;
   layer->input_size = input_size;
   layer->output_size = output_size;
+
+  assert(pre_layer_cnt <= 1);
+  
+  layer->pre_layer_cnt = pre_layer_cnt;
+  if (pre_layer_cnt > 0) {
+    layer->post_layers = calloc(pre_layer_cnt, sizeof(Layer *));
+  }
+  layer->post_layer_cnt = post_layer_cnt;
+  if (post_layer_cnt > 0) {
+    layer->post_layers = calloc(post_layer_cnt, sizeof(Layer *));
+  }
+
   layer->input = calloc(batch_size * input_size, sizeof(float));
   layer->output = calloc(batch_size * input_size, sizeof(float));
   layer->ground_truth = calloc(batch_size, sizeof(float));
@@ -60,20 +72,20 @@ BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, float rolling
 void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
-  memcpy(layer->input, net->input, layer->input_size * net->batch_size * sizeof(float));
-  memcpy(layer->output, layer->input, layer->output_size * net->batch_size * sizeof(float));
+  memcpy(layer->input, net->input, layer->input_size * layer->batch_size * sizeof(float));
+  memcpy(layer->output, layer->input, layer->output_size * layer->batch_size * sizeof(float));
   if (net->mode == TRAIN) {
-    MeanTensor(layer->output, layer->output_size, net->batch_size, layer->mean);
-    VarianceTensor(layer->output, layer->output_size, net->batch_size, layer->mean,
+    MeanTensor(layer->output, layer->output_size, layer->batch_size, layer->mean);
+    VarianceTensor(layer->output, layer->output_size, layer->batch_size, layer->mean,
                    layer->variance);
     /**
      *  计算 norm 并且 存储norm之前的值
      * */
     memcpy(layer->output_before_norm, layer->output,
-           layer->output_size * net->batch_size * sizeof(float));
-    NormTensor(layer->output, layer->output_size, net->batch_size, layer->mean, layer->variance);
+           layer->output_size * layer->batch_size * sizeof(float));
+    NormTensor(layer->output, layer->output_size, layer->batch_size, layer->mean, layer->variance);
     memcpy(layer->output_normed, layer->output,
-           layer->output_size * net->batch_size * sizeof(float));
+           layer->output_size * layer->batch_size * sizeof(float));
     /**
      *  计算移动平均 和 移动方差
      * */
@@ -86,13 +98,13 @@ void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
      *  Test的时候直接用训练的时候算出来的移动平均和移动方差
      *  详见 https://www.zhihu.com/question/55621104
      * */
-    NormTensor(layer->output, layer->output_size, net->batch_size, layer->rolling_mean,
+    NormTensor(layer->output, layer->output_size, layer->batch_size, layer->rolling_mean,
                layer->rolling_variance);
   }
   /**
    *  w*γ +β
    **/
-  BatchNormTensor(layer->output, layer->output_size, net->batch_size, layer->bn_gammas,
+  BatchNormTensor(layer->output, layer->output_size, layer->batch_size, layer->bn_gammas,
                   layer->bn_betas);
 }
 void BackwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
@@ -100,9 +112,9 @@ void BackwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
   /**
    *  求 gamma 和 beta 的梯度
    **/
-  BnGamaBackward(layer->delta, layer->output_normed, layer->output_size, net->batch_size,
+  BnGamaBackward(layer->delta, layer->output_normed, layer->output_size, layer->batch_size,
                  layer->bn_gamma_grads);
-  BnBetaBackward(layer->delta, layer->output_size, net->batch_size, layer->bn_beta_grads);
+  BnBetaBackward(layer->delta, layer->output_size, layer->batch_size, layer->bn_beta_grads);
   /**
    *  更新delta， 再次说明delta 是对每个加权输入的导数值 dL/dx bn的求导相对复杂，具体公式推导见
    *  https://zhuanlan.zhihu.com/p/45614576
@@ -115,13 +127,13 @@ void BackwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
    *  4 normalize delta
    *     d = d * 1/(sqrt(v)) + (1 / batch_size) * dm + (2 / batch_size) *dv
    **/
-  BnDot(layer->bn_gammas, layer->output_size, net->batch_size, layer->delta);
-  BnMeanDelta(layer->variance, layer->delta, layer->bn_gammas, layer->output_size, net->batch_size,
+  BnDot(layer->bn_gammas, layer->output_size, layer->batch_size, layer->delta);
+  BnMeanDelta(layer->variance, layer->delta, layer->bn_gammas, layer->output_size, layer->batch_size,
               layer->mean_delta);
   BnNormDelta(layer->output_before_norm, layer->mean, layer->variance, layer->mean_delta,
-              layer->variance_delta, layer->input_size, net->batch_size, layer->delta);
+              layer->variance_delta, layer->input_size, layer->batch_size, layer->delta);
   if (net->delta) {
-    memcpy(net->delta, layer->delta, layer->output_size * net->batch_size * sizeof(float));
+    memcpy(net->delta, layer->delta, layer->output_size * layer->batch_size * sizeof(float));
   }
 }
 

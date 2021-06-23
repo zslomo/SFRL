@@ -49,6 +49,6 @@ typedef enum { ADAM, SGD, ADAGRAD, RMSPROP } OptType;
 /**
  * merge 类型
  **/
-typedef enum { SUM, DOT, AVG } MergeType;
+typedef enum { SUM, DOT, AVG, CONCAT } MergeType;
 
 #endif

@@ -13,6 +13,7 @@
 #include "../sfrl/layer/batchnorm_layer.h"
 #include "../sfrl/layer/dense_layer.h"
 #include "../sfrl/layer/loss_layer.h"
+#include "../sfrl/layer/merge_layer.h"
 #include "../sfrl/layer/softmax_layer.h"
 #include "../sfrl/loader/loader.h"
 #include "../sfrl/network/network.h"
@@ -70,29 +71,58 @@ int ReadData(char *filename, char **samples) {
 int BuildNet(Data *data, Network *net) {
   int class_num = 3;
   int seed = 1024;
-  Layer *dense_1 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_1");
-  Layer *dense_2 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_2");
-  Layer *dense_3 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_3");
-  Layer *merge_1 = Make
-  Layer *dense_4 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_4");
-  Layer *dense_5 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, LINEAR, NORMAL, seed, "dense_4");
-  
-  net->layers[0] =
-      MakeDenseLayer(net->batch_size, data->sample_size, 1024, LINEAR, NORMAL, seed, "dense_1");
-  net->layers[1] = MakeBatchNormLayer(net->batch_size, 1024, 0.9, "bn_1");
-  net->layers[2] =
-      MakeDenseLayer(net->batch_size, 1024, class_num, LINEAR, NORMAL, seed, "dense_2");
-  net->layers[3] = MakeSoftmaxLayer(net->batch_size, class_num, "softmax");
-  net->layers[4] = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
-  net->sample_size = data->sample_size;
 
+  // 构建节点
+  Layer *dense_1 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_1");
+  Layer *dense_2 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_2");
+  Layer *dense_3 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_3");
+  Layer *merge_1 = MakeMergeLayer(net->batch_size, 16, 16, 3, 1, AVG, "merge_1");
+  Layer *dense_4 = MakeDenseLayer(net->batch_size, 16, 8, 1, 1, LINEAR, NORMAL, seed, "dense_4");
+  Layer *dense_5 =
+      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_5");
+  Layer *dense_6 = MakeDenseLayer(net->batch_size, 16, 8, 1, 1, LINEAR, NORMAL, seed, "dense_6");
+  Layer *merge_2 = MakeMergeLayer(net->batch_size, 8, 8, 2, 1, SUM, "merge_2");
+  Layer *dense_7 = MakeDenseLayer(net->batch_size, 8, 4, 1, 2, LINEAR, NORMAL, seed, "dense_7");
+  Layer *dense_8 =
+      MakeDenseLayer(net->batch_size, 4, class_num, 1, 1, LINEAR, NORMAL, seed, "dense_8");
+  Layer *dense_9 =
+      MakeDenseLayer(net->batch_size, 4, class_num, 1, 1, LINEAR, NORMAL, seed, "dense_9");
+  Layer *sm_1 = MakeSoftmaxLayer(net->batch_size, class_num, 1, 1, "softmax_1");
+  Layer *sm_2 = MakeSoftmaxLayer(net->batch_size, class_num, 1, 1, "softmax_2");
+  Layer *loss_1 = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss_1");
+  Layer *loss_2 = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss_2");
+
+  // 画计算图 
+  LinkLayers(dense_1, merge_1);
+  LinkLayers(dense_2, merge_1);
+  LinkLayers(dense_3, merge_1);
+  LinkLayers(merge_1, dense_4);
+  LinkLayers(dense_5, dense_6);
+  LinkLayers(dense_4, merge_2);
+  LinkLayers(dense_6, merge_2);
+  LinkLayers(merge_2, dense_7);
+  LinkLayers(dense_7, dense_8);
+  LinkLayers(dense_7, dense_9);
+  LinkLayers(merge_2, dense_7);
+  LinkLayers(dense_8, sm_1);
+  LinkLayers(sm_1, loss_1);
+  LinkLayers(dense_9, sm_2);
+  LinkLayers(sm_2, loss_2);
+
+  Layer start_layer_list[4] = {dense_1, dense_2, dense_3, dense_5};
+  net->start_layer_cnt = 4;
+  net->start_layers = start_layer_list;
+  Layer loss_layer_list[2] = {dense_1, dense_2, dense_3, dense_5};
+  net->loss_layer_cnt = 2;
+  net->loss_layers = loss_layer_list;
+
+  net->sample_size = data->sample_size;
   net->pred = calloc(net->batch_size * class_num, sizeof(float));
 }
+
 int main(int argc, char **argv) {
   clock_t b_time = clock();
   printf("Read data...\n");
@@ -106,7 +136,8 @@ int main(int argc, char **argv) {
   BuildNet(data, net);
   printf("start train...\n");
   net->learning_rate = 0.1;
-  net->train(net, data, SGD, 1000);
+  
+  net->train(net, data, SGD, 10);
   printf("time cost %f\n", (clock() - b_time) * 1.0 / CLOCKS_PER_SEC);
   net->test(net, data);
 }

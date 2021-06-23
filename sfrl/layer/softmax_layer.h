@@ -6,7 +6,8 @@
 
 typedef Layer SoftmaxLayer;
 
-SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size, char *layer_name);
+SoftmaxLayer *MakeSoftmaxLayer(int batch_size, int input_size, int pre_layer_cnt,
+                               int post_layer_cnt, char *layer_name);
 void ForwardSoftmaxLayer(SoftmaxLayer *layer, Network *net);
 void BackwardSoftmaxLayer(SoftmaxLayer *layer, Network *net);
 void SoftmaxCore(float *input, int n, float temp, float *output);

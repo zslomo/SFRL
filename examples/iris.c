@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   BuildNet(data, net);
   printf("start train...\n");
   net->learning_rate = 0.1;
-  net->train(net, data, SGD, 1000);
+  net->simple_train(net, data, SGD, 1000);
   printf("time cost %f\n", (clock() - b_time) * 1.0 / CLOCKS_PER_SEC);
   net->test(net, data);
 }
