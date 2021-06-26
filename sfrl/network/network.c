@@ -90,6 +90,7 @@ float SimpleTrain(Network *net, Data *data, OptType opt_type, int epoches) {
       ForwardNetwork(net);
       BackWardNetwork(net);
       UpdateNetwork(net);
+      // net->layers[1]->print_update(net->layers[1]);
       ResetNetwork(net);
       loss_sum += net->loss;
     }
@@ -118,9 +119,8 @@ float SimpleTrain(Network *net, Data *data, OptType opt_type, int epoches) {
       net->origin_input = realloc(net->origin_input, net->input_size * sizeof(float));
       net->ground_truth = realloc(net->ground_truth, batch_size * sizeof(float));
     }
-
     epoch_loss = loss_sum / (batch_num * batch_size + last_batch_size);
-    // printf("epoch %d loss = %f\n", i + 1, epoch_loss);
+    printf("epoch %d loss = %f\n", i + 1, epoch_loss);
     net->reset(net);
   }
   return epoch_loss;

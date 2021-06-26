@@ -70,6 +70,9 @@ BatchNormLayer *MakeBatchNormLayer(int batch_size, int input_size, int pre_layer
 }
 
 void ForwardBatchNormLayer(BatchNormLayer *layer, Network *net) {
+  if (layer->pre_layers) {
+    assert(layer->pre_layers[0]->output_size == layer->input_size);
+  }
   assert(layer->rolling_momentum > 0);
   float momentum = layer->rolling_momentum;
   memcpy(layer->input, net->input, layer->input_size * layer->batch_size * sizeof(float));

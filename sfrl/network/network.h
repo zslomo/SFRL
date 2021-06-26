@@ -54,7 +54,7 @@ struct Network {
   float (*simple_train)(struct Network *, struct Data *, OptType, int);
   float (*train)(struct Network *, OptType, int);
   float (*simple_test)(struct Network *, struct Data *);
-  float (*test)(struct Network *, OptType, int);
+  float (*test)(struct Network *);
   void (*reset)(struct Network *);
   void (*print)(struct Network *);
 };

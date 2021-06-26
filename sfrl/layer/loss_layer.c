@@ -1,12 +1,12 @@
 #include "loss_layer.h"
-#include "../loss/loss.h"
-#include "../network/network.h"
-#include "../utils/blas.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../loss/loss.h"
+#include "../network/network.h"
+#include "../utils/blas.h"
 
 LossLayer *MakeLossLayer(int batch_size, int input_size, int output_size, float weight, LossType loss_type,
                          char *layer_name) {
@@ -41,51 +41,47 @@ void ForwardLossLayer(LossLayer *layer, Network *net) {
   InitTensor(layer->output_size * layer->batch_size, 0, layer->output);
   // 计算loss
   switch (layer->loss_type) {
-  case MSE:
-    MeanSquareError(n, net->input, net->ground_truth, layer->output);
-    break;
-  case CE:
-    CrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth, layer->output,
-                 0);
-    break;
-  case CEW:
-    CrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth, layer->output,
-                 1);
-    break;
-  default:
-    break;
+    case MSE:
+      MeanSquareError(n, net->input, net->ground_truth, layer->output);
+      break;
+    case CE:
+      CrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth, layer->output, 0);
+      break;
+    case CEW:
+      CrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth, layer->output, 1);
+      break;
+    default:
+      break;
   }
   ScalTensor(layer->output_size * layer->batch_size, layer->loss_weight, layer->output);
-  // printf("epoch %d, batch %d, loss: ", net->epoch, net->batch);
+  printf("epoch %d, batch %d, loss: ", net->epoch, net->batch);
   for (int i = 0; i < layer->batch_size; ++i) {
     float tmp = 0;
     for (int j = 0; j < layer->input_size; ++j) {
       tmp += layer->output[i * layer->input_size + j];
     }
-    // printf("%f,", tmp);
+    printf("%f,", tmp);
     net->loss += tmp;
   }
 
-  // printf("\n");
+  printf("\n");
 }
 
 void BackwardLossLayer(LossLayer *layer, Network *net) {
   assert(net->ground_truth);
   int n = layer->batch_size * layer->input_size;
   switch (layer->loss_type) {
-  case MSE:
-    BackwardMeanSquareError(n, net->input, net->ground_truth, layer->delta);
-    break;
-  case CE:
-    BackwardCrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth,
-                         layer->delta, 0);
-    break;
-  case CEW:
-    BackwardCrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth,
-                         layer->delta, 1);
-    break;
-  default:
-    break;
+    case MSE:
+      BackwardMeanSquareError(n, net->input, net->ground_truth, layer->delta);
+      break;
+    case CE:
+      BackwardCrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth, layer->delta, 0);
+      break;
+    case CEW:
+      BackwardCrossEntropy(layer->batch_size, layer->input_size, net->input, net->ground_truth, layer->delta, 1);
+      break;
+    default:
+      break;
   }
   memcpy(net->delta, layer->delta, n * sizeof(float));
 }

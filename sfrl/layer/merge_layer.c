@@ -1,9 +1,12 @@
 #include "merge_layer.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../utils/blas.h"
 #include "../utils/utils.h"
 
-MergeLayer *MakeMergeLayer(int batch_size, int input_size, int output_size, int pre_layer_cnt,
-                           int post_layer_cnt, MergeType merge_type, char *layer_name) {
+MergeLayer *MakeMergeLayer(int batch_size, int input_size, int output_size, int pre_layer_cnt, int post_layer_cnt,
+                           MergeType merge_type, char *layer_name) {
   MergeLayer *layer = calloc(1, sizeof(MergeLayer));
   layer->layer_type = MERGE;
   layer->merge_type = merge_type;
@@ -31,51 +34,51 @@ MergeLayer *MakeMergeLayer(int batch_size, int input_size, int output_size, int 
   return layer;
 }
 
-void ForwardMergeLayer(MergeLayer *layer) {
+void ForwardMergeLayer(MergeLayer *layer, Network *net) {
   assert(layer->pre_layer_cnt > 0);
   assert(layer->pre_layers);
   assert(layer->post_layer_cnt > 0);
   assert(layer->post_layers);
   switch (layer->merge_type) {
-  case SUM:
-    MergeSum(layer);
-    break;
-  case AVG:
-    MergeAvg(layer);
-    break;
-  case DOT:
-    MergeDot(layer);
-    break;
-  case CONCAT:
-    MergeConcat(layer);
-  default:
-    break;
+    case SUM:
+      MergeSum(layer);
+      break;
+    case AVG:
+      MergeAvg(layer);
+      break;
+    case DOT:
+      MergeDot(layer);
+      break;
+    case CONCAT:
+      MergeConcat(layer);
+    default:
+      break;
   }
 }
 
-void BackwardMergeLayer(MergeLayer *layer) {
+void BackwardMergeLayer(MergeLayer *layer, Network *net) {
   assert(layer->pre_layer_cnt > 0);
   assert(layer->pre_layers);
   assert(layer->post_layer_cnt > 0);
   assert(layer->post_layers);
   switch (layer->merge_type) {
-  case SUM:
-    MergeSumBackward(layer);
-    break;
-  case AVG:
-    MergeAvgBackward(layer);
-    break;
-  case DOT:
-    MergeDotBackward(layer);
-    break;
-  case CONCAT:
-    MergeConcatBackward(layer);
-  default:
-    break;
+    case SUM:
+      MergeSumBackward(layer);
+      break;
+    case AVG:
+      MergeAvgBackward(layer);
+      break;
+    case DOT:
+      MergeDotBackward(layer);
+      break;
+    case CONCAT:
+      MergeConcatBackward(layer);
+    default:
+      break;
   }
 }
 
-MergeSum(MergeLayer *layer) {
+void MergeSum(MergeLayer *layer) {
   for (int i = 0; i < layer->pre_layer_cnt; ++i) {
     Layer *pre_layer = layer->pre_layers[i];
     assert(layer->output_size == pre_layer->output_size);
@@ -97,7 +100,7 @@ MergeSum(MergeLayer *layer) {
  *  So sum模式下的 梯度回传就是delta透穿给每个子层而已
  **/
 
-MergeSumBackward(MergeLayer *layer) {
+void MergeSumBackward(MergeLayer *layer) {
   int layer_cnt = layer->pre_layer_cnt;
   for (int i = 0; i < layer->pre_layer_cnt; ++i) {
     Layer *pre_layer = layer->pre_layers[i];
@@ -106,13 +109,12 @@ MergeSumBackward(MergeLayer *layer) {
   }
 }
 
-MergeAvg(MergeLayer *layer) {
+void MergeAvg(MergeLayer *layer) {
   int layer_cnt = layer->pre_layer_cnt;
   for (int i = 0; i < layer_cnt; ++i) {
     Layer *pre_layer = layer->pre_layers[i];
     assert(layer->output_size == pre_layer->output_size);
-    AxpyTensor(layer->batch_size * layer->output_size, 1.0 / layer_cnt, pre_layer->output,
-               layer->output);
+    AxpyTensor(layer->batch_size * layer->output_size, 1.0 / layer_cnt, pre_layer->output, layer->output);
   }
 }
 
@@ -130,17 +132,16 @@ MergeAvg(MergeLayer *layer) {
  *  So avg模式下的 梯度回传就是 delta / n
  **/
 
-MergeAvgBackward(MergeLayer *layer) {
+void MergeAvgBackward(MergeLayer *layer) {
   int layer_cnt = layer->pre_layer_cnt;
   for (int i = 0; i < layer->pre_layer_cnt; ++i) {
     Layer *pre_layer = layer->pre_layers[i];
     assert(layer->output_size == pre_layer->output_size);
-    AxpyTensor(layer->batch_size * layer->output_size, 1.0 / layer_cnt, layer->delta,
-               pre_layer->delta);
+    AxpyTensor(layer->batch_size * layer->output_size, 1.0 / layer_cnt, layer->delta, pre_layer->delta);
   }
 }
 
-MergeDot(MergeLayer *layer) {
+void MergeDot(MergeLayer *layer) {
   int layer_cnt = layer->pre_layer_cnt;
   InitTensor(layer->output_size, 1.0, layer->output);
   for (int i = 0; i < layer_cnt; ++i) {
@@ -164,7 +165,7 @@ MergeDot(MergeLayer *layer) {
  *  So dot模式下的 梯度回传就是 delta * (input_2 *...*input_n)
  **/
 
-MergeDotBackward(MergeLayer *layer) {
+void MergeDotBackward(MergeLayer *layer) {
   int layer_cnt = layer->pre_layer_cnt;
   float *tmp = malloc(layer->output_size * sizeof(float));
   InitTensor(layer->output_size, 1.0, tmp);
@@ -182,15 +183,14 @@ MergeDotBackward(MergeLayer *layer) {
   free(tmp);
 }
 
-MergeConcat(MergeLayer *layer) {
+void MergeConcat(MergeLayer *layer) {
   int pre_output_size_sum = 0;
   for (int i = 0; i < layer->pre_layer_cnt; ++i) {
     Layer *pre_layer = layer->pre_layers[i];
     int offset = pre_output_size_sum;
     pre_output_size_sum += pre_layer->output_size;
     assert(pre_output_size_sum <= layer->output_size);
-    memcpy(layer->output + offset, pre_layer->output,
-           layer->batch_size * pre_layer->output_size * sizeof(float));
+    memcpy(layer->output + offset, pre_layer->output, layer->batch_size * pre_layer->output_size * sizeof(float));
   }
   assert(pre_output_size_sum == layer->output_size);
 }
@@ -205,15 +205,14 @@ MergeConcat(MergeLayer *layer) {
  *  所以只要原封不动把delta 取自己对应的一块就行
  **/
 
-MergeConcatBackward(MergeLayer *layer) {
+void MergeConcatBackward(MergeLayer *layer) {
   int pre_output_size_sum = 0;
   for (int i = 0; i < layer->pre_layer_cnt; ++i) {
     Layer *pre_layer = layer->pre_layers[i];
     int offset = pre_output_size_sum;
     pre_output_size_sum += pre_layer->output_size;
     assert(pre_output_size_sum <= layer->output_size);
-    memcpy(pre_layer->delta, layer->delta + offset,
-           layer->batch_size * pre_layer->output_size * sizeof(float));
+    memcpy(pre_layer->delta, layer->delta + offset, layer->batch_size * pre_layer->output_size * sizeof(float));
   }
   assert(pre_output_size_sum == layer->output_size);
 }

@@ -1,19 +1,18 @@
 #include "dense_layer.h"
-#include "../activation/activation.h"
-#include "../optimizer/optimizer.h"
-#include "../utils/blas.h"
-#include "../utils/utils.h"
-#include "base_layer.h"
 #include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../activation/activation.h"
+#include "../optimizer/optimizer.h"
+#include "../utils/blas.h"
+#include "../utils/utils.h"
+#include "base_layer.h"
 
-DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, int pre_layer_cnt,
-                           int post_layer_cnt, ActiType acti_type, InitType init_type, int seed,
-                           char *layer_name) {
+DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, int pre_layer_cnt, int post_layer_cnt,
+                           ActiType acti_type, InitType init_type, int seed, char *layer_name) {
   DenseLayer *layer = calloc(1, sizeof(DenseLayer));
   layer->layer_type = DENSE;
   layer->layer_name = layer_name;
@@ -60,6 +59,9 @@ DenseLayer *MakeDenseLayer(int batch_size, int input_size, int output_size, int 
 void UpdateDenseLayer(DenseLayer *layer, Network *net) { UpdateLayer(layer, net); }
 
 void ForwardDenseLayer(DenseLayer *layer, Network *net) {
+  if (layer->pre_layers) {
+    assert(layer->pre_layers[0]->output_size == layer->input_size);
+  }
   memcpy(layer->input, net->input, layer->input_size * layer->batch_size * sizeof(float));
   int output_tensor_size = layer->output_size * layer->batch_size;
   FillTensorBySingleValue(output_tensor_size, layer->output, 0);
@@ -77,8 +79,8 @@ void ForwardDenseLayer(DenseLayer *layer, Network *net) {
    **/
   int TransA = 0;
   int TransB = 0;
-  Gemm(TransA, TransB, layer->batch_size, layer->output_size, layer->input_size, 1, 1, net->input,
-       layer->input_size, layer->weights, layer->output_size, layer->output, layer->output_size);
+  Gemm(TransA, TransB, layer->batch_size, layer->output_size, layer->input_size, 1, 1, net->input, layer->input_size,
+       layer->weights, layer->output_size, layer->output, layer->output_size);
 
   /**
     计算 + bias
@@ -105,8 +107,7 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    *  计算 bias_grads = delta
    **/
   for (int i = 0; i < layer->batch_size; ++i) {
-    memcpy(layer->bias_grads, layer->delta + i * layer->output_size,
-           layer->output_size * sizeof(float));
+    memcpy(layer->bias_grads, layer->delta + i * layer->output_size, layer->output_size * sizeof(float));
     // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
 
@@ -125,9 +126,8 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
   int TransA = 1;
   int TransB = 0;
 
-  Gemm(TransA, TransB, layer->input_size, layer->output_size, layer->batch_size, 1, 1, layer->input,
-       layer->input_size, layer->delta, layer->output_size, layer->weight_grads,
-       layer->output_size);
+  Gemm(TransA, TransB, layer->input_size, layer->output_size, layer->batch_size, 1, 1, layer->input, layer->input_size,
+       layer->delta, layer->output_size, layer->weight_grads, layer->output_size);
   /**
    *  计算 后一层的delta，即net->delta
    *  A delta batch_size * output_size
