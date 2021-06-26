@@ -1,10 +1,8 @@
 #ifndef ACTIVATIONS_H
 #define ACTIVATIONS_H
 #include <math.h>
-
+#include "../type/type.h"
 // 激活函数
-typedef enum { SIGMOID, RELU, LINEAR, TANH } ActiType;
-
 float Activate(float x, ActiType acti_type);
 float Gradient(float x, ActiType acti_type);
 void ActivateTensor(float *TensorX, const int size, const ActiType acti_type);

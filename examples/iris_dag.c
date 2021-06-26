@@ -73,29 +73,23 @@ int BuildNet(Data *data, Network *net) {
   int seed = 1024;
 
   // 构建节点
-  Layer *dense_1 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_1");
-  Layer *dense_2 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_2");
-  Layer *dense_3 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_3");
+  Layer *dense_1 = MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_1");
+  Layer *dense_2 = MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_2");
+  Layer *dense_3 = MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_3");
   Layer *merge_1 = MakeMergeLayer(net->batch_size, 16, 16, 3, 1, AVG, "merge_1");
   Layer *dense_4 = MakeDenseLayer(net->batch_size, 16, 8, 1, 1, LINEAR, NORMAL, seed, "dense_4");
-  Layer *dense_5 =
-      MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_5");
+  Layer *dense_5 = MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_5");
   Layer *dense_6 = MakeDenseLayer(net->batch_size, 16, 8, 1, 1, LINEAR, NORMAL, seed, "dense_6");
   Layer *merge_2 = MakeMergeLayer(net->batch_size, 8, 8, 2, 1, SUM, "merge_2");
   Layer *dense_7 = MakeDenseLayer(net->batch_size, 8, 4, 1, 2, LINEAR, NORMAL, seed, "dense_7");
-  Layer *dense_8 =
-      MakeDenseLayer(net->batch_size, 4, class_num, 1, 1, LINEAR, NORMAL, seed, "dense_8");
-  Layer *dense_9 =
-      MakeDenseLayer(net->batch_size, 4, class_num, 1, 1, LINEAR, NORMAL, seed, "dense_9");
+  Layer *dense_8 = MakeDenseLayer(net->batch_size, 4, class_num, 1, 1, LINEAR, NORMAL, seed, "dense_8");
+  Layer *dense_9 = MakeDenseLayer(net->batch_size, 4, class_num, 1, 1, LINEAR, NORMAL, seed, "dense_9");
   Layer *sm_1 = MakeSoftmaxLayer(net->batch_size, class_num, 1, 1, "softmax_1");
   Layer *sm_2 = MakeSoftmaxLayer(net->batch_size, class_num, 1, 1, "softmax_2");
-  Layer *loss_1 = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss_1");
-  Layer *loss_2 = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss_2");
+  Layer *loss_1 = MakeLossLayer(net->batch_size, class_num, class_num, 1.0, CE, "loss_1");
+  Layer *loss_2 = MakeLossLayer(net->batch_size, class_num, class_num, 1.0, CE, "loss_2");
 
-  // 画计算图 
+  // 画计算图
   LinkLayers(dense_1, merge_1);
   LinkLayers(dense_2, merge_1);
   LinkLayers(dense_3, merge_1);
@@ -136,7 +130,7 @@ int main(int argc, char **argv) {
   BuildNet(data, net);
   printf("start train...\n");
   net->learning_rate = 0.1;
-  
+
   net->train(net, data, SGD, 10);
   printf("time cost %f\n", (clock() - b_time) * 1.0 / CLOCKS_PER_SEC);
   net->test(net, data);

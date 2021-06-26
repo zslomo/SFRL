@@ -1,4 +1,10 @@
 #include "network.h"
+#include <assert.h>
+#include <float.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../activation/activation.h"
 #include "../data/data.h"
 #include "../layer/base_layer.h"
@@ -8,12 +14,6 @@
 #include "../optimizer/optimizer.h"
 #include "../utils/blas.h"
 #include "../utils/utils.h"
-#include <assert.h>
-#include <float.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 Network *MakeNetwork(int n, int batch_size) {
   Network *net = calloc(1, sizeof(Network));
@@ -50,13 +50,12 @@ void PrintNetwork(Network *net) {
     int output_size = layer->output_size;
     if (layer->layer_type == DENSE) {
       int weight_num = input_size * output_size + output_size;
-      printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n", layer_type_str, input_size,
-             output_size, acti_type_str, weight_num);
+      printf("-- %s: shape: %d × %d, activation: %s, weight num: %d\n", layer_type_str, input_size, output_size,
+             acti_type_str, weight_num);
       all_weight_num += weight_num;
     } else if (layer->layer_type == BATCHNORMALIZATION) {
       int weight_num = output_size * 2;
-      printf("-- %s: shape: %d × %d, weight num: %d\n", layer_type_str, input_size, output_size,
-             weight_num);
+      printf("-- %s: shape: %d × %d, weight num: %d\n", layer_type_str, input_size, output_size, weight_num);
       all_weight_num += weight_num;
     } else {
       printf("-- %s\n", layer_type_str);
@@ -102,8 +101,7 @@ float SimpleTrain(Network *net, Data *data, OptType opt_type, int epoches) {
         net->layers[j]->batch_size = last_batch_size;
       }
       // 最后一个不够 batch_size 的 batch 需要单独处理
-      net->origin_input =
-          realloc(net->origin_input, last_batch_size * data->sample_size * sizeof(float));
+      net->origin_input = realloc(net->origin_input, last_batch_size * data->sample_size * sizeof(float));
       net->ground_truth = realloc(net->ground_truth, last_batch_size * sizeof(float));
       GetNextBatchData(data, net, last_batch_size, batch_size * (batch_num - 2));
       net->batch_trained_cnt++;
@@ -253,7 +251,7 @@ void LinkLayers(Layer *l1, Layer *l2) {
 
   l1->post_layers[i] = l2;
 
-  int i = 0;
+  i = 0;
   while (l2->pre_layers[++i])
     ;
   l2->pre_layers[i] = l1;

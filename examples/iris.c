@@ -70,13 +70,11 @@ int ReadData(char *filename, char **samples) {
 int BuildNet(Data *data, Network *net) {
   int class_num = 3;
   int seed = 1024;
-  net->layers[0] =
-      MakeDenseLayer(net->batch_size, data->sample_size, 1024, LINEAR, NORMAL, seed, "dense_1");
-  net->layers[1] = MakeBatchNormLayer(net->batch_size, 1024, 0.9, "bn_1");
-  net->layers[2] =
-      MakeDenseLayer(net->batch_size, 1024, class_num, LINEAR, NORMAL, seed, "dense_2");
+  net->layers[0] = MakeDenseLayer(net->batch_size, data->sample_size, 1024, 0, 1, LINEAR, NORMAL, seed, "dense_1");
+  net->layers[1] = MakeBatchNormLayer(net->batch_size, 1024, 1, 1, 0.9, "bn_1");
+  net->layers[2] = MakeDenseLayer(net->batch_size, 1024, class_num, 0, 1, LINEAR, NORMAL, seed, "dense_2");
   net->layers[3] = MakeSoftmaxLayer(net->batch_size, class_num, "softmax");
-  net->layers[4] = MakeLossLayer(net->batch_size, class_num, class_num, CE, "loss");
+  net->layers[4] = MakeLossLayer(net->batch_size, class_num, class_num, 1.0, CE, "loss");
   net->sample_size = data->sample_size;
 
   net->pred = calloc(net->batch_size * class_num, sizeof(float));

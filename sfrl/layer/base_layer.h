@@ -21,7 +21,7 @@ struct Layer {
   LossType loss_type;   // 损失函数类型
   MergeType merge_type; // merge类型
   char *layer_name;
-
+  float loss_weight;
   /**
    *  这两个指针数组用来指向当前层的上n层和下n层
    *  通过这种设计，构建一个layer graph，类似于tensorflow的计算图，但是简单很多，
