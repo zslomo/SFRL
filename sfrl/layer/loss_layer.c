@@ -54,17 +54,17 @@ void ForwardLossLayer(LossLayer *layer, Network *net) {
       break;
   }
   ScalTensor(layer->output_size * layer->batch_size, layer->loss_weight, layer->output);
-  printf("epoch %d, batch %d, loss: ", net->epoch, net->batch);
+  // printf("epoch %d, batch %d, loss: ", net->epoch, net->batch);
   for (int i = 0; i < layer->batch_size; ++i) {
     float tmp = 0;
     for (int j = 0; j < layer->input_size; ++j) {
       tmp += layer->output[i * layer->input_size + j];
     }
-    printf("%f,", tmp);
+    // printf("%f,", tmp);
     net->loss += tmp;
   }
 
-  printf("\n");
+  // printf("\n");
 }
 
 void BackwardLossLayer(LossLayer *layer, Network *net) {

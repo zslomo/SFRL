@@ -87,10 +87,11 @@ float SimpleTrain(Network *net, Data *data, OptType opt_type, int epoches) {
       //拿到一个batch的数据
       GetNextBatchData(data, net, batch_size, batch_size * j);
       net->batch_trained_cnt += batch_size;
+      net->layers[0]->print_weight(net->layers[0]);
       ForwardNetwork(net);
       BackWardNetwork(net);
       UpdateNetwork(net);
-      // net->layers[1]->print_update(net->layers[1]);
+      net->layers[0]->print_grad(net->layers[0]);
       ResetNetwork(net);
       loss_sum += net->loss;
     }

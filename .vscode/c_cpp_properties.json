@@ -1,0 +1,23 @@
+{
+  "configurations": [
+      {
+          "name": "Linux",
+          "cStandard": "c11",
+          "cppStandard": "c++17",
+          "includePath": [
+              "${workspaceFolder}"    
+          ],
+          "defines": [],
+          "browse": {
+              "path": [
+                  "${workspaceRoot}/**"                  
+              ],
+              "limitSymbolsToIncludedHeaders": true,
+              "databaseFilename": ""
+          },
+          "compilerPath": "/usr/bin/gcc",
+          "intelliSenseMode": "gcc-x64"
+      }
+  ],
+  "version": 4
+}

@@ -108,7 +108,6 @@ void BackwardDenseLayer(DenseLayer *layer, Network *net) {
    **/
   for (int i = 0; i < layer->batch_size; ++i) {
     memcpy(layer->bias_grads, layer->delta + i * layer->output_size, layer->output_size * sizeof(float));
-    // printf("bias_grads[0] = %f\n", layer->bias_grads[0]);
   }
 
   /**
