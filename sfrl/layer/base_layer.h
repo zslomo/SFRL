@@ -5,6 +5,7 @@
 #include "../loss/loss.h"
 #include "../type/type.h"
 #include <stddef.h>
+#include <pthread.h>
 
 struct Layer;
 typedef struct Layer Layer;

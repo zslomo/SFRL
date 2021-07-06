@@ -117,6 +117,31 @@ int BuildNet(Data *data, Network *net) {
   net->pred = calloc(net->batch_size * class_num, sizeof(float));
 }
 
+int BuildNetTest(Data *data, Network *net) {
+  int class_num = 3;
+  int seed = 1024;
+
+  // 构建节点
+  Layer *dense_1 = MakeDenseLayer(net->batch_size, data->sample_size, 16, 0, 1, LINEAR, NORMAL, seed, "dense_1");
+  Layer *sm_1 = MakeSoftmaxLayer(net->batch_size, class_num, 1, 1, "softmax_1");
+  Layer *loss_1 = MakeLossLayer(net->batch_size, class_num, class_num, 1.0, CE, "loss_1");
+
+  // 画计算图
+  LinkLayers(dense_1, sm_1);
+  LinkLayers(sm_1, loss_1);
+
+  Layer start_layer_list[1] = {dense_1};
+  net->start_layer_cnt = 1;
+  net->start_layers = start_layer_list;
+  Layer loss_layer_list[1] = {loss_1};
+  net->loss_layer_cnt = 1;
+  net->loss_layers = loss_layer_list;
+
+  net->sample_size = data->sample_size;
+  net->pred = calloc(net->batch_size * class_num, sizeof(float));
+}
+
+
 int main(int argc, char **argv) {
   clock_t b_time = clock();
   printf("Read data...\n");
@@ -125,13 +150,12 @@ int main(int argc, char **argv) {
   int batch_size = 150;
   printf("get sample done...\n");
   Data *data = BuildInput(samples, batch_size, sample_num, 4);
-  Network *net = MakeNetwork(5, batch_size);
+  Network *net = MakeNetwork(0, batch_size);
+  BuildNetTest(data, net);
   printf("make network done..\n");
-  BuildNet(data, net);
   printf("start train...\n");
   net->learning_rate = 0.1;
-
-  net->train(net, data, SGD, 10);
+  net->train(net, data, SGD);
   printf("time cost %f\n", (clock() - b_time) * 1.0 / CLOCKS_PER_SEC);
-  net->test(net, data);
+  // net->test(net, data);
 }

@@ -2,6 +2,7 @@
     "files.associations": {
         "*.tcc": "c",
         "cstdlib": "c",
-        "memory": "c"
+        "memory": "c",
+        "pthread.h": "c"
     }
 }

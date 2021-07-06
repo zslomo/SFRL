@@ -17,8 +17,11 @@
 
 Network *MakeNetwork(int n, int batch_size) {
   Network *net = calloc(1, sizeof(Network));
-  net->layer_depth = n;
-  net->layers = calloc(net->layer_depth, sizeof(Layer *));
+  if (n > 0) {
+    net->layer_depth = n;
+    net->layers = calloc(net->layer_depth, sizeof(Layer *));
+  }
+
   // 默认优化参数
   net->learning_rate = 0.1;
   net->momentum = 0.9;
@@ -139,7 +142,9 @@ float SimpleTest(Network *net, Data *data) {
   return acc;
 }
 
-float Train(Network *net, OptType opt_type, int epoches) {}
+float Train(Network *net, OptType opt_type, int epoches) {
+  for
+}
 
 float Test(Network *net) {}
 
